@@ -1765,3 +1765,11 @@ html.light .icon-moon { display: none; }
 .ck-eq:active { opacity: 0.85; transform: scale(0.93); }
 .ck-clear { color: var(--danger); }
 .ck-zero { grid-column: span 2; }
+
+/* FIX: Pastikan label kolom split tidak membungkus, sehingga tinggi kolom simetris */
+.product-cols.double .col-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-height: 32px; /* opsional, pastikan tinggi minimal konsisten */
+}
