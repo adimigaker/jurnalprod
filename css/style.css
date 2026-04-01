@@ -10,7 +10,6 @@
   --transition: 0.18s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Hilangkan tap highlight biru di Android */
 * {
   -webkit-tap-highlight-color: transparent !important;
 }
@@ -453,47 +452,6 @@ html.light .icon-moon { display: none; }
 .product-cols.double .container-row-top { position: relative; }
 .product-cols.double .container-input { padding-right: 0; }
 
-/* ===== TOMBOL HAPUS DI SAMPING STEPPER ===== */
-.container-row-bottom {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.remove-btn {
-  background: none;
-  border: none;
-  color: var(--text-subtle);
-  cursor: pointer;
-  padding: 6px;
-  margin-left: 12px;
-  display: flex;
-  align-items: center;
-  border-radius: var(--radius-sm);
-  transition: color var(--transition), background var(--transition);
-  flex-shrink: 0;
-  -webkit-tap-highlight-color: transparent;
-}
-.remove-btn:active {
-  color: var(--danger);
-  background: var(--danger-soft);
-}
-.remove-btn svg {
-  width: 16px;
-  height: 16px;
-  stroke-width: 2;
-}
-
-/* Ukuran tombol hapus di split mode (lebih kecil agar proporsional) */
-.product-cols.double .remove-btn {
-  padding: 2px;
-}
-.product-cols.double .remove-btn svg {
-  width: 11px;
-  height: 11px;
-}
 
 /* Edit modal: konsisten */
 #editContainerArea .remove-btn {
@@ -566,17 +524,61 @@ html.light .icon-moon { display: none; }
 .container-row-bottom {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
 }
 
 /* Baris 3: hasil kali */
+/* Baris hasil: tombol kiri, hasil kanan */
 .container-row-result {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  padding-top: 2px;
+  justify-content: space-between;
+  padding-top: 6px;
   border-top: 1px solid var(--border);
-  margin-top: 2px;
+  margin-top: 4px;
+}
+
+.container-row-result .remove-btn {
+  padding: 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  color: var(--text-subtle);
+  transition: color var(--transition);
+  line-height: 0;
+}
+
+.container-row-result .remove-btn:active {
+  color: var(--danger);
+}
+
+.container-row-result .remove-btn svg {
+  width: 16px;
+  height: 16px;
+  stroke-width: 1.8;
+}
+
+/* Group hasil di kanan */
+.result-group {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+}
+
+/* Untuk mode split: ukuran ikon lebih kecil */
+.product-cols.double .container-row-result .remove-btn svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* Tambahan: atur font untuk hasil */
+.result-group .mult-result {
+  font-size: 14px;
+  font-weight: 700;
+  margin: 0 2px;
 }
 
 .container-input {
@@ -1426,7 +1428,7 @@ html.light .icon-moon { display: none; }
 #page-beranda .product-cols.single .mult-result { font-size: clamp(17px, 5vw, 22px); }
 #page-beranda .product-cols.single .container-row-top,
 #page-beranda .product-cols.single .container-row-bottom { justify-content: center; }
-#page-beranda .product-cols.single .container-row-result { justify-content: flex-end; }
+#page-beranda .product-cols.single .container-row-result { padding-top: 2px; margin-top: 1px; }
 #page-beranda .product-cols.single .add-container-btn { max-width: 220px; margin: 12px auto 0 auto; }
 
 /* Split mode — lebih kompak karena 2 kolom */
