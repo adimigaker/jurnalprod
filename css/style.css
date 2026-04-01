@@ -12,7 +12,7 @@
 
 /* Hilangkan tap highlight biru di Android */
 * {
-  -webkit-tap-highlight-color: transparent;
+  -webkit-tap-highlight-color: transparent !important;
 }
 
 /* Dark theme — default */
