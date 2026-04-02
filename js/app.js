@@ -52,7 +52,9 @@ const Sync = {
       target_single: p.targetSingle || 0,
       target_besar: p.targetBesar || 0,
       target_kecil: p.targetKecil || 0,
-      containers: p.containers
+      containers: p.containers,
+      unit: p.unit || 'pcs',
+      note: p.note || ''
     };
   },
 
@@ -66,7 +68,9 @@ const Sync = {
       targetSingle: r.target_single || 0,
       targetBesar: r.target_besar || 0,
       targetKecil: r.target_kecil || 0,
-      containers: r.containers
+      containers: r.containers,
+      unit: r.unit || 'pcs',
+      note: r.note || ''
     };
   },
 
@@ -149,7 +153,10 @@ function playSound() {
 
 // ==================== STORAGE ====================
 const DB = {
-  get: () => JSON.parse(localStorage.getItem('cp_data') || '[]'),
+  get: () => {
+    const data = JSON.parse(localStorage.getItem('cp_data') || '[]');
+    return data.map(p => ({ ...p, unit: p.unit || 'pcs', note: p.note || '' }));
+  },
   save: (data) => localStorage.setItem('cp_data', JSON.stringify(data)),
   addProduct: (p) => {
     const d = DB.get(); d.push(p); DB.save(d);
@@ -417,7 +424,7 @@ function renderProductCard(p) {
        <div class="result-group">
          <span style="font-size:12px;color:var(--text-muted);margin-right:6px">=</span>
          <span class="mult-result" data-res="${p.id}-${colKey}-${i}">${result}</span>
-         <span style="font-size:12px;color:var(--text-muted);margin-left:4px">pcs</span>
+         <span style="font-size:12px;color:var(--text-muted);margin-left:4px">${p.unit || 'pcs'}</span>
        </div>
       </div>
      </div>`;
@@ -500,6 +507,7 @@ function renderProductCard(p) {
 
 function renderSummary(p) {
   const isSplit = p.split;
+  const unit = p.unit || 'pcs';
 
   const diffLabel = (diff, target) => {
     if (diff === 0) return { text: 'Sesuai Target', cls: 'diff-zero' };
@@ -514,7 +522,7 @@ function renderSummary(p) {
       total += sub;
       return `<div class="summary-row">
         <span class="summary-label">${c.val || 0} × ${c.mult}</span>
-        <span class="summary-val">${sub} pcs</span>
+        <span class="summary-val">${sub} ${unit}</span>
       </div>`;
     }).join('');
     const diff = total - (target || 0);
@@ -525,18 +533,23 @@ function renderSummary(p) {
     const { lines, total, diff } = calcCol(p.containers.single, p.targetSingle);
     const { text, cls } = diffLabel(diff, p.targetSingle || 0);
     const diffStr = diff > 0 ? `+${diff}` : `${diff}`;
+    let noteHtml = '';
+    if (p.note) {
+      noteHtml = `<div class="summary-note" style="margin-top:8px; font-size:11px; color:var(--text-muted); border-top:1px solid var(--border); padding-top:6px;">📝 Catatan: ${p.note}</div>`;
+    }
     return `<div class="summary-box">
       <div class="summary-title">Ringkasan</div>
       <div class="summary-grid">
         ${lines}
         <div class="summary-divider"></div>
         <div class="summary-row summary-total">
-          <span>Total</span><span class="summary-val">${total} pcs</span>
+          <span>Total</span><span class="summary-val">${total} ${unit}</span>
         </div>
         <div class="summary-row">
           <span class="summary-label ${cls}">${text}</span>
           <span class="summary-val ${cls}">${diff === 0 ? '' : diffStr}</span>
         </div>
+        ${noteHtml}
       </div>
     </div>`;
   } else {
@@ -551,6 +564,10 @@ function renderSummary(p) {
     const kecilStr   = kecil.diff > 0 ? `+${kecil.diff}` : `${kecil.diff}`;
     const besarStr   = besar.diff > 0 ? `+${besar.diff}` : `${besar.diff}`;
     const grandStr   = grandDiff > 0 ? `+${grandDiff}` : `${grandDiff}`;
+    let noteHtml = '';
+    if (p.note) {
+      noteHtml = `<div class="summary-note" style="margin-top:8px; font-size:11px; color:var(--text-muted); border-top:1px solid var(--border); padding-top:6px;">📝 Catatan: ${p.note}</div>`;
+    }
     return `<div class="summary-box">
       <div class="summary-title">Ringkasan</div>
       <div class="summary-grid">
@@ -558,23 +575,24 @@ function renderSummary(p) {
         ${kecil.lines}
         <div class="summary-row">
           <span class="summary-label ${kecilInfo.cls}">${kecilInfo.text}</span>
-          <span class="summary-val ${kecilInfo.cls}">${kecil.diff === 0 ? kecil.total + ' pcs' : kecil.total + ' (' + kecilStr + ')'}</span>
+          <span class="summary-val ${kecilInfo.cls}">${kecil.diff === 0 ? kecil.total + ' ' + unit : kecil.total + ' ' + unit + ' (' + kecilStr + ')'}</span>
         </div>
         <div class="summary-divider"></div>
         <div class="summary-row"><span class="summary-label" style="font-weight:600">Porsi Besar</span><span></span></div>
         ${besar.lines}
         <div class="summary-row">
           <span class="summary-label ${besarInfo.cls}">${besarInfo.text}</span>
-          <span class="summary-val ${besarInfo.cls}">${besar.diff === 0 ? besar.total + ' pcs' : besar.total + ' (' + besarStr + ')'}</span>
+          <span class="summary-val ${besarInfo.cls}">${besar.diff === 0 ? besar.total + ' ' + unit : besar.total + ' ' + unit + ' (' + besarStr + ')'}</span>
         </div>
         <div class="summary-divider"></div>
         <div class="summary-row summary-total">
-          <span>Total</span><span class="summary-val">${grandTotal} pcs</span>
+          <span>Total</span><span class="summary-val">${grandTotal} ${unit}</span>
         </div>
         <div class="summary-row">
           <span class="summary-label ${grandInfo.cls}">${grandInfo.text}</span>
           <span class="summary-val ${grandInfo.cls}">${grandDiff === 0 ? '' : grandStr}</span>
         </div>
+        ${noteHtml}
       </div>
     </div>`;
   }
@@ -799,6 +817,8 @@ function openAddModal() {
   $('#targetSingle').value = '';
   $('#targetBesar').value = '';
   $('#targetKecil').value = '';
+  $('#inputUnit').value = 'pcs';
+  $('#inputNote').value = '';
   splitMode = false;
   $('#checkboxRow').classList.remove('checked');
   $('#subTargets').classList.remove('visible');
@@ -824,6 +844,9 @@ $('#btnOk').addEventListener('click', () => {
   if (!name || !date) { alert('Nama produk dan tanggal wajib diisi.'); return; }
 
   const existingToday = DB.getByDate(date);
+  const unit = $('#inputUnit').value.trim() || 'pcs';
+  const note = $('#inputNote').value.trim();
+
   const product = {
     id: Date.now().toString(),
     name, date,
@@ -834,7 +857,9 @@ $('#btnOk').addEventListener('click', () => {
     targetKecil: parseInt($('#targetKecil').value) || 0,
     containers: splitMode
       ? { besar: [{ val: 0, mult: 1 }], kecil: [{ val: 0, mult: 1 }] }
-      : { single: [{ val: 0, mult: 1 }] }
+      : { single: [{ val: 0, mult: 1 }] },
+    unit: unit,
+    note: note
   };
 
   DB.addProduct(product);
@@ -881,7 +906,7 @@ function renderEditCol(label, colKey, target, containers) {
         <div class="result-group">
           <span style="font-size:12px;color:var(--text-muted);margin-right:6px">=</span>
           <span class="mult-result" id="editres-${colKey}-${i}">${result}</span>
-          <span style="font-size:12px;color:var(--text-muted);margin-left:4px">pcs</span>
+          <span style="font-size:12px;color:var(--text-muted);margin-left:4px">${editState.unit || 'pcs'}</span>
         </div>
       </div>
     </div>`;
@@ -1059,6 +1084,8 @@ function openEditModal(pid) {
   $('#editProductId').value = pid;
   $('#editTanggal').value = p.date;
   $('#editNama').value = p.name;
+  $('#editUnit').value = p.unit || 'pcs';
+  $('#editNote').value = p.note || '';
 
   renderEditContainerArea();
   $('#editModalOverlay').classList.add('open');
@@ -1083,6 +1110,8 @@ $('#btnEditSimpan').addEventListener('click', () => {
 
   editState.name = name;
   editState.date = date;
+  editState.unit = $('#editUnit').value.trim() || 'pcs';
+  editState.note = $('#editNote').value.trim();
 
   const data = DB.get();
   const idx = data.findIndex(x => x.id === editState.id);
