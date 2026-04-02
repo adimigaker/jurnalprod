@@ -120,6 +120,16 @@
       </div>
     </div>
 
+    <!-- Field Satuan dan Catatan -->
+    <div class="field-group">
+      <label class="field-label">Satuan (default: pcs)</label>
+      <input class="field-input" type="text" id="inputUnit" placeholder="pcs, kg, liter, dll" value="pcs" />
+    </div>
+    <div class="field-group">
+      <label class="field-label">Catatan</label>
+      <textarea class="field-input" id="inputNote" rows="2" placeholder="Misal: dari tim produksi A"></textarea>
+    </div>
+
     <div class="modal-actions">
       <button class="btn btn-ghost" id="btnBatal">Batal</button>
       <button class="btn btn-primary" id="btnOk">Tambahkan</button>
@@ -232,6 +242,7 @@
   </div>
 </div>
 
+<!-- Modal Edit Produk -->
 <div class="modal-overlay" id="editModalOverlay">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
@@ -250,6 +261,16 @@
 
     <!-- Kontainer editor — diisi dinamis -->
     <div id="editContainerArea"></div>
+
+    <!-- Field Satuan dan Catatan di Edit Modal -->
+    <div class="field-group">
+      <label class="field-label">Satuan</label>
+      <input class="field-input" type="text" id="editUnit" placeholder="pcs, kg, liter" />
+    </div>
+    <div class="field-group">
+      <label class="field-label">Catatan</label>
+      <textarea class="field-input" id="editNote" rows="2"></textarea>
+    </div>
 
     <div class="modal-actions">
       <button class="btn btn-ghost" id="btnEditBatal">Batal</button>
