@@ -9,6 +9,21 @@ const fmt = (d) => new Date(d + 'T00:00:00').toLocaleDateString('id-ID', { weekd
 const fmtShort = (d) => new Date(d + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
 const fmtDay = (d) => new Date(d + 'T00:00:00').toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' });
 
+// Format angka dengan koma sebagai pemisah desimal
+function formatNumberForDisplay(num) {
+  if (num === undefined || num === null || isNaN(num)) return '0';
+  // Batasi maksimal 2 angka desimal untuk tampilan rapi (opsional)
+  let rounded = Math.round(num * 100) / 100;
+  return rounded.toString().replace(/\./g, ',');
+}
+
+function parseNumberFromInput(value) {
+  if (!value || value === '') return 0;
+  // Ganti koma dengan titik, lalu parse float
+  let parsed = parseFloat(value.replace(/,/g, '.'));
+  return isNaN(parsed) ? 0 : parsed;
+}
+
 // ==================== SYNC LAYER ====================
 const SB_URL_KEY  = 'jp_sb_url';
 const SB_KEY_KEY  = 'jp_sb_key';
@@ -406,13 +421,13 @@ function renderProductCard(p) {
       return `
       <div class="container-row" style="${accentStyle}">
        <div class="container-row-top">
-        <input class="container-input" type="number" value="${c.val || ''}" min="0"
+        <input class="container-input" type="text" value="${formatNumberForDisplay(c.val)}" min="0"
          data-pid="${p.id}" data-col="${colKey}" data-cidx="${i}" placeholder="0" />
        </div>
        <div class="container-row-bottom">
         <div class="mult-stepper">
          <button class="mult-step-btn mult-minus" data-pid="${p.id}" data-col="${colKey}" data-cidx="${i}">−</button>
-         <input class="mult-step-input" type="number" value="${c.mult || 1}" min="1" max="999"
+         <input class="mult-step-input" type="text" value="${c.mult}" min="1" max="999"
           data-pid="${p.id}" data-col="${colKey}" data-cidx="${i}" />
          <button class="mult-step-btn mult-plus" data-pid="${p.id}" data-col="${colKey}" data-cidx="${i}">+</button>
         </div>
@@ -423,7 +438,7 @@ function renderProductCard(p) {
        </button>
        <div class="result-group">
          <span style="font-size:12px;color:var(--text-muted);margin-right:6px">=</span>
-         <span class="mult-result" data-res="${p.id}-${colKey}-${i}">${result}</span>
+         <span class="mult-result" data-res="${p.id}-${colKey}-${i}">${formatNumberForDisplay(result)}</span>
          <span style="font-size:12px;color:var(--text-muted);margin-left:4px">${p.unit || 'pcs'}</span>
        </div>
       </div>
@@ -436,14 +451,14 @@ function renderProductCard(p) {
         <div class="col-label">
           <div class="col-label-left">
             <span>${label}</span>
-            <span class="target-badge" id="badge-${editId}">Target: ${target || 0}</span>
+            <span class="target-badge" id="badge-${editId}">Target: ${formatNumberForDisplay(target)}</span>
             <button class="edit-target-btn" data-pid="${p.id}" data-col="${colKey}" title="Edit target">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             </button>
           </div>
         </div>
         <div class="target-edit-wrap" id="tedit-${editId}">
-          <input class="target-edit-input" type="number" min="0" placeholder="${target || 0}"
+          <input class="target-edit-input" type="text" placeholder="${formatNumberForDisplay(target)}"
             data-pid="${p.id}" data-col="${colKey}" id="tinput-${editId}" />
           <button class="target-save-btn" data-pid="${p.id}" data-col="${colKey}">Simpan</button>
         </div>
@@ -467,7 +482,7 @@ function renderProductCard(p) {
   const target = p.split ? (p.targetKecil||0) + (p.targetBesar||0) : (p.targetSingle||0);
   const diff   = headerTotal - target;
   const dClass = diff > 0 ? 'diff-positive' : diff < 0 ? 'diff-negative' : 'diff-zero';
-  const dStr   = diff >= 0 ? `+${diff}` : `${diff}`;
+  const dStr   = diff >= 0 ? `+${formatNumberForDisplay(diff)}` : `${formatNumberForDisplay(diff)}`;
   const meta   = p.split ? 'Porsi Kecil + Besar' : 'Single';
 
   return `
@@ -476,11 +491,11 @@ function renderProductCard(p) {
       <div class="product-header">
         <div style="flex:1;min-width:0">
           <div class="riwayat-name">${p.name}</div>
-          <div class="riwayat-meta">${meta} · Target ${target}</div>
+          <div class="riwayat-meta">${meta} · Target ${formatNumberForDisplay(target)}</div>
         </div>
         <div style="display:flex;align-items:center;gap:6px">
           <div style="text-align:right">
-            <div class="riwayat-total card-header-total">${headerTotal}</div>
+            <div class="riwayat-total card-header-total">${formatNumberForDisplay(headerTotal)}</div>
             <div style="font-size:11px;font-family:var(--mono)" class="${dClass} card-header-diff">${dStr}</div>
           </div>
           <button class="delete-product-btn" data-pid="${p.id}" title="Hapus Produk">
@@ -511,8 +526,8 @@ function renderSummary(p) {
 
   const diffLabel = (diff, target) => {
     if (diff === 0) return { text: 'Sesuai Target', cls: 'diff-zero' };
-    if (diff < 0)  return { text: `Kurang dari target (${target})`, cls: 'diff-negative' };
-    return           { text: `Melebihi target (${target})`, cls: 'diff-positive' };
+    if (diff < 0)  return { text: `Kurang dari target (${formatNumberForDisplay(target)})`, cls: 'diff-negative' };
+    return           { text: `Melebihi target (${formatNumberForDisplay(target)})`, cls: 'diff-positive' };
   };
 
   const calcCol = (containers, target) => {
@@ -521,8 +536,8 @@ function renderSummary(p) {
       const sub = (c.val || 0) * (c.mult || 1);
       total += sub;
       return `<div class="summary-row">
-        <span class="summary-label">${c.val || 0} × ${c.mult}</span>
-        <span class="summary-val">${sub} ${unit}</span>
+        <span class="summary-label">${formatNumberForDisplay(c.val)} × ${c.mult}</span>
+        <span class="summary-val">${formatNumberForDisplay(sub)} ${unit}</span>
       </div>`;
     }).join('');
     const diff = total - (target || 0);
@@ -532,7 +547,7 @@ function renderSummary(p) {
   if (!isSplit) {
     const { lines, total, diff } = calcCol(p.containers.single, p.targetSingle);
     const { text, cls } = diffLabel(diff, p.targetSingle || 0);
-    const diffStr = diff > 0 ? `+${diff}` : `${diff}`;
+    const diffStr = diff > 0 ? `+${formatNumberForDisplay(diff)}` : `${formatNumberForDisplay(diff)}`;
     let noteHtml = '';
     if (p.note) {
       noteHtml = `<div class="summary-note" style="margin-top:8px; font-size:11px; color:var(--text-muted); border-top:1px solid var(--border); padding-top:6px;">📝 Catatan: ${p.note}</div>`;
@@ -543,7 +558,7 @@ function renderSummary(p) {
         ${lines}
         <div class="summary-divider"></div>
         <div class="summary-row summary-total">
-          <span>Total</span><span class="summary-val">${total} ${unit}</span>
+          <span>Total</span><span class="summary-val">${formatNumberForDisplay(total)} ${unit}</span>
         </div>
         <div class="summary-row">
           <span class="summary-label ${cls}">${text}</span>
@@ -561,9 +576,9 @@ function renderSummary(p) {
     const kecilInfo  = diffLabel(kecil.diff, p.targetKecil || 0);
     const besarInfo  = diffLabel(besar.diff, p.targetBesar || 0);
     const grandInfo  = diffLabel(grandDiff, totalTarget);
-    const kecilStr   = kecil.diff > 0 ? `+${kecil.diff}` : `${kecil.diff}`;
-    const besarStr   = besar.diff > 0 ? `+${besar.diff}` : `${besar.diff}`;
-    const grandStr   = grandDiff > 0 ? `+${grandDiff}` : `${grandDiff}`;
+    const kecilStr   = kecil.diff > 0 ? `+${formatNumberForDisplay(kecil.diff)}` : `${formatNumberForDisplay(kecil.diff)}`;
+    const besarStr   = besar.diff > 0 ? `+${formatNumberForDisplay(besar.diff)}` : `${formatNumberForDisplay(besar.diff)}`;
+    const grandStr   = grandDiff > 0 ? `+${formatNumberForDisplay(grandDiff)}` : `${formatNumberForDisplay(grandDiff)}`;
     let noteHtml = '';
     if (p.note) {
       noteHtml = `<div class="summary-note" style="margin-top:8px; font-size:11px; color:var(--text-muted); border-top:1px solid var(--border); padding-top:6px;">📝 Catatan: ${p.note}</div>`;
@@ -575,18 +590,18 @@ function renderSummary(p) {
         ${kecil.lines}
         <div class="summary-row">
           <span class="summary-label ${kecilInfo.cls}">${kecilInfo.text}</span>
-          <span class="summary-val ${kecilInfo.cls}">${kecil.diff === 0 ? kecil.total + ' ' + unit : kecil.total + ' ' + unit + ' (' + kecilStr + ')'}</span>
+          <span class="summary-val ${kecilInfo.cls}">${kecil.diff === 0 ? formatNumberForDisplay(kecil.total) + ' ' + unit : formatNumberForDisplay(kecil.total) + ' ' + unit + ' (' + kecilStr + ')'}</span>
         </div>
         <div class="summary-divider"></div>
         <div class="summary-row"><span class="summary-label" style="font-weight:600">Porsi Besar</span><span></span></div>
         ${besar.lines}
         <div class="summary-row">
           <span class="summary-label ${besarInfo.cls}">${besarInfo.text}</span>
-          <span class="summary-val ${besarInfo.cls}">${besar.diff === 0 ? besar.total + ' ' + unit : besar.total + ' ' + unit + ' (' + besarStr + ')'}</span>
+          <span class="summary-val ${besarInfo.cls}">${besar.diff === 0 ? formatNumberForDisplay(besar.total) + ' ' + unit : formatNumberForDisplay(besar.total) + ' ' + unit + ' (' + besarStr + ')'}</span>
         </div>
         <div class="summary-divider"></div>
         <div class="summary-row summary-total">
-          <span>Total</span><span class="summary-val">${grandTotal} ${unit}</span>
+          <span>Total</span><span class="summary-val">${formatNumberForDisplay(grandTotal)} ${unit}</span>
         </div>
         <div class="summary-row">
           <span class="summary-label ${grandInfo.cls}">${grandInfo.text}</span>
@@ -605,27 +620,32 @@ function attachCardEvents(ctx) {
       const data = DB.get();
       const p = data.find(x => x.id === pid);
       if (!p) return;
-      p.containers[col][idx].val = parseInt(input.value) || 0;
+      let newVal = parseNumberFromInput(input.value);
+      p.containers[col][idx].val = newVal;
       saveAndSync(pid, data);
       updateResult(pid, col, idx, p.containers[col][idx]);
       refreshSummary(pid);
+      input.value = formatNumberForDisplay(newVal);
     });
     input.addEventListener('input', () => {
       const pid = input.dataset.pid, col = input.dataset.col, idx = parseInt(input.dataset.cidx);
       const data = DB.get();
       const p = data.find(x => x.id === pid);
       if (!p) return;
-      p.containers[col][idx].val = parseInt(input.value) || 0;
+      let newVal = parseNumberFromInput(input.value);
+      p.containers[col][idx].val = newVal;
       DB.save(data);
       updateResult(pid, col, idx, p.containers[col][idx]);
       refreshSummary(pid);
+      input.value = formatNumberForDisplay(newVal);
     });
   });
 
   $$('.mult-step-input', ctx).forEach(input => {
     input.addEventListener('input', () => {
       const pid = input.dataset.pid, col = input.dataset.col, idx = parseInt(input.dataset.cidx);
-      const val = Math.max(1, parseInt(input.value) || 1);
+      let val = parseNumberFromInput(input.value);
+      val = Math.max(1, val);
       input.value = val;
       saveMult(pid, col, idx, val);
     });
@@ -635,7 +655,8 @@ function attachCardEvents(ctx) {
     btn.addEventListener('click', () => {
       const pid = btn.dataset.pid, col = btn.dataset.col, idx = parseInt(btn.dataset.cidx);
       const inp = btn.nextElementSibling;
-      const val = Math.max(1, parseInt(inp.value) - 1);
+      let val = parseNumberFromInput(inp.value) - 1;
+      val = Math.max(1, val);
       inp.value = val;
       saveMult(pid, col, idx, val);
     });
@@ -646,7 +667,7 @@ function attachCardEvents(ctx) {
       playSound();
       const pid = btn.dataset.pid, col = btn.dataset.col, idx = parseInt(btn.dataset.cidx);
       const inp = btn.previousElementSibling;
-      const val = parseInt(inp.value) + 1;
+      let val = parseNumberFromInput(inp.value) + 1;
       inp.value = val;
       saveMult(pid, col, idx, val);
     });
@@ -693,7 +714,7 @@ function attachCardEvents(ctx) {
         const p = data.find(x => x.id === pid);
         if (p) {
           const cur = col === 'single' ? p.targetSingle : col === 'besar' ? p.targetBesar : p.targetKecil;
-          inp.value = cur || '';
+          inp.value = formatNumberForDisplay(cur);
           inp.focus();
         }
       }
@@ -708,7 +729,7 @@ function attachCardEvents(ctx) {
       const wrap = document.getElementById(`tedit-${editId}`);
       const badge = document.getElementById(`badge-${editId}`);
       if (!inp) return;
-      const newVal = parseInt(inp.value) || 0;
+      const newVal = parseNumberFromInput(inp.value);
       const data = DB.get();
       const p = data.find(x => x.id === pid);
       if (p) {
@@ -716,7 +737,7 @@ function attachCardEvents(ctx) {
         else if (col === 'besar') p.targetBesar = newVal;
         else if (col === 'kecil') p.targetKecil = newVal;
         saveAndSync(pid, data);
-        if (badge) badge.textContent = `Target: ${newVal}`;
+        if (badge) badge.textContent = `Target: ${formatNumberForDisplay(newVal)}`;
         if (wrap) wrap.classList.remove('visible');
         refreshSummary(pid);
       }
@@ -776,7 +797,10 @@ function saveMult(pid, col, idx, val) {
 
 function updateResult(pid, col, idx, c) {
   const res = document.querySelector(`[data-res="${pid}-${col}-${idx}"]`);
-  if (res) res.textContent = `= ${(c.val || 0) * (c.mult || 1)}`;
+  if (res) {
+    const result = (c.val || 0) * (c.mult || 1);
+    res.textContent = `= ${formatNumberForDisplay(result)}`;
+  }
 }
 
 function refreshSummary(pid) {
@@ -802,9 +826,9 @@ function refreshSummary(pid) {
       : (p.containers.single||[]).reduce((s,c)=>s+(c.val||0)*(c.mult||1),0);
     const tgt = p.split ? (p.targetKecil||0)+(p.targetBesar||0) : (p.targetSingle||0);
     const d   = tot - tgt;
-    totalEl.textContent = `${tot}`;
+    totalEl.textContent = `${formatNumberForDisplay(tot)}`;
     if (diffEl) {
-      diffEl.textContent = d >= 0 ? `+${d}` : `${d}`;
+      diffEl.textContent = d >= 0 ? `+${formatNumberForDisplay(d)}` : `${formatNumberForDisplay(d)}`;
       diffEl.className = `card-header-diff ${d > 0 ? 'diff-positive' : d < 0 ? 'diff-negative' : 'diff-zero'}`;
     }
   }
@@ -852,9 +876,9 @@ $('#btnOk').addEventListener('click', () => {
     name, date,
     split: splitMode,
     order: existingToday.length,
-    targetSingle: parseInt($('#targetSingle').value) || 0,
-    targetBesar: parseInt($('#targetBesar').value) || 0,
-    targetKecil: parseInt($('#targetKecil').value) || 0,
+    targetSingle: parseNumberFromInput($('#targetSingle').value),
+    targetBesar: parseNumberFromInput($('#targetBesar').value),
+    targetKecil: parseNumberFromInput($('#targetKecil').value),
     containers: splitMode
       ? { besar: [{ val: 0, mult: 1 }], kecil: [{ val: 0, mult: 1 }] }
       : { single: [{ val: 0, mult: 1 }] },
@@ -888,13 +912,13 @@ function renderEditCol(label, colKey, target, containers) {
     return `
     <div class="container-row" style="${accentStyle}">
       <div class="container-row-top">
-        <input class="container-input edit-val-input" type="number" value="${c.val || ''}"
-          min="0" data-col="${colKey}" data-cidx="${i}" placeholder="0" />
+        <input class="container-input edit-val-input" type="text" value="${formatNumberForDisplay(c.val)}"
+          data-col="${colKey}" data-cidx="${i}" placeholder="0" />
       </div>
       <div class="container-row-bottom">
         <div class="mult-stepper">
           <button class="mult-step-btn edit-mult-minus" data-col="${colKey}" data-cidx="${i}">−</button>
-          <input class="mult-step-input edit-mult-input" type="number" value="${c.mult || 1}"
+          <input class="mult-step-input edit-mult-input" type="text" value="${c.mult}"
             min="1" max="999" data-col="${colKey}" data-cidx="${i}" />
           <button class="mult-step-btn edit-mult-plus" data-col="${colKey}" data-cidx="${i}">+</button>
         </div>
@@ -905,7 +929,7 @@ function renderEditCol(label, colKey, target, containers) {
         </button>
         <div class="result-group">
           <span style="font-size:12px;color:var(--text-muted);margin-right:6px">=</span>
-          <span class="mult-result" id="editres-${colKey}-${i}">${result}</span>
+          <span class="mult-result" id="editres-${colKey}-${i}">${formatNumberForDisplay(result)}</span>
           <span style="font-size:12px;color:var(--text-muted);margin-left:4px">${editState.unit || 'pcs'}</span>
         </div>
       </div>
@@ -917,12 +941,12 @@ function renderEditCol(label, colKey, target, containers) {
       <div class="col-label" style="margin-bottom:8px">
         <div class="col-label-left">
           <span>${label}</span>
-          <span class="target-badge" id="editbadge-${colKey}">Target: ${target || 0}</span>
+          <span class="target-badge" id="editbadge-${colKey}">Target: ${formatNumberForDisplay(target)}</span>
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-        <input class="field-input edit-target-field" type="number" value="${target || 0}"
-          min="0" data-col="${colKey}" placeholder="Target"
+        <input class="field-input edit-target-field" type="text" value="${formatNumberForDisplay(target)}"
+          data-col="${colKey}" placeholder="Target"
           style="padding:7px 10px;font-size:13px;" />
         <span style="font-size:12px;color:var(--text-muted);white-space:nowrap">= target</span>
       </div>
@@ -957,15 +981,18 @@ function attachEditContainerEvents(ctx) {
   $$('.edit-val-input', ctx).forEach(inp => {
     inp.addEventListener('input', () => {
       const col = inp.dataset.col, idx = parseInt(inp.dataset.cidx);
-      editState.containers[col][idx].val = parseInt(inp.value) || 0;
+      let newVal = parseNumberFromInput(inp.value);
+      editState.containers[col][idx].val = newVal;
       refreshEditResult(col, idx);
+      inp.value = formatNumberForDisplay(newVal);
     });
   });
 
   $$('.edit-mult-input', ctx).forEach(inp => {
     inp.addEventListener('input', () => {
       const col = inp.dataset.col, idx = parseInt(inp.dataset.cidx);
-      const val = Math.max(1, parseInt(inp.value) || 1);
+      let val = parseNumberFromInput(inp.value);
+      val = Math.max(1, val);
       inp.value = val;
       editState.containers[col][idx].mult = val;
       refreshEditResult(col, idx);
@@ -976,7 +1003,8 @@ function attachEditContainerEvents(ctx) {
     btn.addEventListener('click', () => {
       const col = btn.dataset.col, idx = parseInt(btn.dataset.cidx);
       const inp = btn.nextElementSibling;
-      const val = Math.max(1, parseInt(inp.value) - 1);
+      let val = parseNumberFromInput(inp.value) - 1;
+      val = Math.max(1, val);
       inp.value = val;
       editState.containers[col][idx].mult = val;
       refreshEditResult(col, idx);
@@ -987,7 +1015,7 @@ function attachEditContainerEvents(ctx) {
     btn.addEventListener('click', () => {
       const col = btn.dataset.col, idx = parseInt(btn.dataset.cidx);
       const inp = btn.previousElementSibling;
-      const val = parseInt(inp.value) + 1;
+      let val = parseNumberFromInput(inp.value) + 1;
       inp.value = val;
       editState.containers[col][idx].mult = val;
       refreshEditResult(col, idx);
@@ -1017,12 +1045,12 @@ function attachEditContainerEvents(ctx) {
   $$('.edit-target-field', ctx).forEach(inp => {
     inp.addEventListener('input', () => {
       const col = inp.dataset.col;
-      const val = parseInt(inp.value) || 0;
+      const val = parseNumberFromInput(inp.value);
       if (col === 'single') editState.targetSingle = val;
       else if (col === 'besar') editState.targetBesar = val;
       else if (col === 'kecil') editState.targetKecil = val;
       const badge = document.getElementById(`editbadge-${col}`);
-      if (badge) badge.textContent = `Target: ${val}`;
+      if (badge) badge.textContent = `Target: ${formatNumberForDisplay(val)}`;
     });
   });
 
@@ -1038,9 +1066,9 @@ function attachEditContainerEvents(ctx) {
         const col = inp.dataset.col, idx = parseInt(inp.dataset.cidx);
         Numpad.show(inp, (val) => {
           inp.removeAttribute('readonly');
-          inp.value = val || '';
+          inp.value = formatNumberForDisplay(val);
           inp.setAttribute('readonly', 'readonly');
-          editState.containers[col][idx].val = val || 0;
+          editState.containers[col][idx].val = val;
           refreshEditResult(col, idx);
         });
       });
@@ -1056,7 +1084,7 @@ function attachEditContainerEvents(ctx) {
         e.preventDefault();
         const col = inp.dataset.col, idx = parseInt(inp.dataset.cidx);
         Numpad.show(inp, (val) => {
-          const v = Math.max(1, val || 1);
+          const v = Math.max(1, val);
           inp.removeAttribute('readonly');
           inp.value = v;
           inp.setAttribute('readonly', 'readonly');
@@ -1071,7 +1099,7 @@ function attachEditContainerEvents(ctx) {
 function refreshEditResult(col, idx) {
   const c = editState.containers[col][idx];
   const el = document.getElementById(`editres-${col}-${idx}`);
-  if (el) el.textContent = `= ${(c.val || 0) * (c.mult || 1)}`;
+  if (el) el.textContent = `= ${formatNumberForDisplay((c.val || 0) * (c.mult || 1))}`;
 }
 
 function openEditModal(pid) {
@@ -1146,12 +1174,12 @@ function buildRiwayatItem(p) {
     <div class="riwayat-item-header" style="padding-left:26px">
       <div>
         <div class="riwayat-name">${p.name}</div>
-        <div class="riwayat-meta">${p.split ? 'Porsi Kecil + Besar' : 'Single'} · Target ${target}</div>
+        <div class="riwayat-meta">${p.split ? 'Porsi Kecil + Besar' : 'Single'} · Target ${formatNumberForDisplay(target)}</div>
       </div>
       <div style="display:flex;align-items:center;gap:6px">
         <div style="text-align:right">
-          <div class="riwayat-total">${total}</div>
-          <div style="font-size:11px;font-family:var(--mono)" class="${dClass}">${diff >= 0 ? '+'+diff : diff}</div>
+          <div class="riwayat-total">${formatNumberForDisplay(total)}</div>
+          <div style="font-size:11px;font-family:var(--mono)" class="${dClass}">${diff >= 0 ? '+'+formatNumberForDisplay(diff) : formatNumberForDisplay(diff)}</div>
         </div>
         <div class="riwayat-chevron">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
@@ -1917,15 +1945,16 @@ const Confirm = (() => {
   return { show, hide };
 })();
 
-// ==================== NUMPAD KEYBOARD ====================
+// ==================== NUMPAD KEYBOARD (desimal) ====================
 const Numpad = (() => {
   const overlay  = document.getElementById('numpad');
   const backdrop = document.getElementById('numpadBackdrop');
   const display  = document.getElementById('numpadDisplay');
   const delBtn   = document.getElementById('numpadDel');
+  const okBtn    = document.getElementById('numpadOk');
 
   let activeInput = null;
-  let currentVal  = '';
+  let currentVal  = ''; // simpan sebagai string dengan koma
   let originalVal = '';
   let onCommit    = null;
 
@@ -1935,7 +1964,10 @@ const Numpad = (() => {
     onCommit    = commitCb;
     currentVal  = '';
     originalVal = inputEl.value || '';
-    display.textContent = originalVal || '0';
+    // Tampilkan originalVal dengan format desimal (ganti titik ke koma jika perlu)
+    let displayVal = originalVal.replace(/\./g, ',');
+    display.textContent = displayVal || '0';
+    currentVal = displayVal === '0' ? '' : displayVal;
 
     const savedWidth = localStorage.getItem('jp_numpad_width') || '80';
     document.documentElement.style.setProperty('--numpad-width', savedWidth + 'vw');
@@ -1999,14 +2031,19 @@ const Numpad = (() => {
   }
 
   function press(val) {
-    if (currentVal === '') {
-      currentVal = val;
+    if (val === ',') {
+      if (currentVal.includes(',')) return; // hanya satu koma
+      if (currentVal === '') currentVal = '0,';
+      else currentVal += ',';
     } else {
-      if (currentVal.length >= 6) return;
-      currentVal += val;
+      // angka
+      if (currentVal === '') currentVal = val;
+      else currentVal += val;
     }
+    // batasi panjang (opsional)
+    if (currentVal.length > 12) currentVal = currentVal.slice(0, 12);
     display.textContent = currentVal;
-    if (activeInput) activeInput.value = currentVal;
+    if (activeInput) activeInput.value = currentVal.replace(/,/g, '.');
   }
 
   function del() {
@@ -2016,28 +2053,32 @@ const Numpad = (() => {
       if (activeInput) activeInput.value = '';
     } else {
       currentVal = currentVal.slice(0, -1);
-      display.textContent = currentVal;
-      if (activeInput) activeInput.value = currentVal;
+      display.textContent = currentVal === '' ? '0' : currentVal;
+      if (activeInput) activeInput.value = currentVal.replace(/,/g, '.');
     }
   }
 
   function commit() {
+    let floatVal = 0;
     if (currentVal === '') {
-      if (activeInput) activeInput.value = originalVal;
-      hide();
-      return;
+      floatVal = 0;
+    } else {
+      // ganti koma ke titik untuk parsing
+      floatVal = parseFloat(currentVal.replace(/,/g, '.'));
+      if (isNaN(floatVal)) floatVal = 0;
     }
-    const val = parseInt(currentVal) || 0;
-    if (activeInput) activeInput.value = val || '';
+    if (activeInput) activeInput.value = floatVal.toString().replace(/\./g, ',');
     const cb = onCommit;
     hide();
-    if (cb) cb(val);
+    if (cb) cb(floatVal);
   }
 
+  // Event listeners
   $$('.nk[data-val]', overlay).forEach(btn => {
     btn.addEventListener('pointerdown', (e) => { e.preventDefault(); press(btn.dataset.val); });
   });
-  delBtn.addEventListener('pointerdown', (e) => { e.preventDefault(); del(); });
+  if (delBtn) delBtn.addEventListener('pointerdown', (e) => { e.preventDefault(); del(); });
+  if (okBtn) okBtn.addEventListener('pointerdown', (e) => { e.preventDefault(); commit(); });
 
   backdrop.addEventListener('pointerdown', (e) => {
     e.preventDefault();
@@ -2077,7 +2118,7 @@ function attachNumpad(ctx) {
     const cidx = parseInt(input.dataset.cidx);
     bindNumpad(input, (val) => {
       input.removeAttribute('readonly');
-      input.value = val || '';
+      input.value = formatNumberForDisplay(val);
       input.setAttribute('readonly', 'readonly');
       const data = DB.get();
       const p = data.find(x => x.id === pid);
@@ -2094,7 +2135,7 @@ function attachNumpad(ctx) {
     const col  = input.dataset.col;
     const cidx = parseInt(input.dataset.cidx);
     bindNumpad(input, (val) => {
-      const v = Math.max(1, val || 1);
+      const v = Math.max(1, val);
       input.removeAttribute('readonly');
       input.value = v;
       input.setAttribute('readonly', 'readonly');
@@ -2113,3 +2154,45 @@ if ('serviceWorker' in navigator) {
     regs.forEach(r => r.unregister());
   });
 }
+
+// ==================== AUTO HIDE HEADER & BOTTOM NAV ====================
+let lastScrollTop = 0;
+const header = document.querySelector('.app-header');
+const bottomNav = document.querySelector('.bottom-nav');
+const SCROLL_THRESHOLD = 10;
+
+function handleScroll() {
+  const activePage = document.querySelector('.page.active');
+  if (!activePage) return;
+  const scrollTop = activePage.scrollTop;
+  const scrollDiff = scrollTop - lastScrollTop;
+
+  if (scrollDiff > SCROLL_THRESHOLD && scrollTop > 50) {
+    header.classList.add('hide');
+    bottomNav.classList.add('hide');
+  } else if (scrollDiff < -SCROLL_THRESHOLD || scrollTop <= 10) {
+    header.classList.remove('hide');
+    bottomNav.classList.remove('hide');
+  }
+  lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
+}
+
+function attachAutoHideListener() {
+  const activePage = document.querySelector('.page.active');
+  if (activePage) {
+    activePage.removeEventListener('scroll', handleScroll);
+    activePage.addEventListener('scroll', handleScroll, { passive: true });
+  }
+}
+
+// Setelah setiap pergantian tab
+const originalSetTab = setTab;
+window.setTab = function(tab) {
+  originalSetTab(tab);
+  setTimeout(attachAutoHideListener, 100);
+};
+
+// Inisialisasi pertama
+document.addEventListener('DOMContentLoaded', () => {
+  attachAutoHideListener();
+});
