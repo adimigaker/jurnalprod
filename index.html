@@ -289,8 +289,11 @@
 <div id="numpadBackdrop" class="numpad-backdrop" style="display:none"></div>
 <div id="numpad" class="numpad-overlay" style="display:none">
   <div class="numpad-container">
-    <div class="numpad-display">
-      <span id="numpadDisplay">0</span>
+    <div class="numpad-header">
+      <div class="numpad-display">
+        <span id="numpadDisplay">0</span>
+      </div>
+      <button class="numpad-delete" id="numpadDel">⌫</button>
     </div>
     <div class="numpad-grid">
       <button class="nk" data-val="1">1</button>
@@ -302,8 +305,9 @@
       <button class="nk" data-val="7">7</button>
       <button class="nk" data-val="8">8</button>
       <button class="nk" data-val="9">9</button>
+      <button class="nk nk-koma" data-val=",">,</button>
       <button class="nk nk-zero" data-val="0">0</button>
-      <button class="nk nk-del" id="numpadDel">⌫</button>
+      <button class="nk nk-ok" id="numpadOk">OK</button>
     </div>
   </div>
 </div>
