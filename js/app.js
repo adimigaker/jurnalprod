@@ -1535,14 +1535,24 @@ function renderRiwayat() {
     const getRange = () => {
         const t = today();
         if (riwayatFilter === "7d") {
-            const d = new Date();
-            d.setDate(d.getDate() - 6);
-            return [d.toISOString().split("T")[0], t];
+            const from = new Date();
+            from.setDate(from.getDate() - 6);
+            const to = new Date();
+            to.setDate(to.getDate() + 7);
+            return [
+                from.toISOString().split("T")[0],
+                to.toISOString().split("T")[0]
+            ];
         }
         if (riwayatFilter === "30d") {
-            const d = new Date();
-            d.setDate(d.getDate() - 29);
-            return [d.toISOString().split("T")[0], t];
+            const from = new Date();
+            from.setDate(from.getDate() - 29);
+            const to = new Date();
+            to.setDate(to.getDate() + 30);
+            return [
+                from.toISOString().split("T")[0],
+                to.toISOString().split("T")[0]
+            ];
         }
         if (riwayatFilter === "custom")
             return [riwayatFrom || t, riwayatTo || t];
@@ -1551,7 +1561,6 @@ function renderRiwayat() {
 
     const [from, to] = getRange();
     const data = DB.getByRange(from, to);
-
     const grouped = {};
     data.forEach(p => {
         if (!grouped[p.date]) grouped[p.date] = [];
