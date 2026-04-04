@@ -24,6 +24,9 @@ const fmtDay = d =>
         day: "numeric",
         month: "short"
     });
+function formatYMD(year, month, day) {
+    return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
 
 // Format angka dengan koma sebagai pemisah desimal
 function formatNumberForDisplay(num) {
@@ -1647,19 +1650,19 @@ function renderKalender() {
 
     let cells = "";
     for (let i = 0; i < startDow; i++) {
-        const d = new Date(calYear, calMonth, -startDow + i + 1);
-        const ds = d.toISOString().split("T")[0];
+        const day = -startDow + i + 1;
+        const d = new Date(calYear, calMonth, day);
+        const ds = formatYMD(calYear, calMonth, day);
         cells += `<div class="cal-day other-month" data-date="${ds}"><span>${d.getDate()}</span></div>`;
     }
     for (let i = 1; i <= lastDay.getDate(); i++) {
-        const d = new Date(calYear, calMonth, i);
-        const ds = d.toISOString().split("T")[0];
-        const isToday = ds === todayStr;
+        const ds = formatYMD(calYear, calMonth, i);
+        const isToday = ds === today();
         const hasDot = dateDots[ds];
         cells += `<div class="cal-day${isToday ? " today" : ""}${hasDot ? " has-data" : ""}" data-date="${ds}">
-      <span>${i}</span>
-      ${hasDot ? '<div class="cal-day-dot"><div class="dot"></div></div>' : ""}
-    </div>`;
+          <span>${i}</span>
+          ${hasDot ? '<div class="cal-day-dot"><div class="dot"></div></div>' : ""}
+        </div>`;
     }
 
     pg.innerHTML = `
