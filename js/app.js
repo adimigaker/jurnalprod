@@ -25,7 +25,7 @@ const fmtDay = d =>
         month: "short"
     });
 function formatYMD(year, month, day) {
-    return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+  return `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
 }
 
 // Format angka dengan koma sebagai pemisah desimal
@@ -286,19 +286,21 @@ $("#themeToggle").addEventListener("click", () => {
 // ==================== REFRESH ====================
 let _lastDate = today();
 
-function refreshApp() {
-    _lastDate = today();
-    $("#headerDate").textContent = new Date().toLocaleDateString("id-ID", {
-        weekday: "long",
-        day: "numeric",
-        month: "long"
-    });
-    const btn = $("#reloadBtn");
-    btn.classList.add("reloading");
-    setTimeout(() => btn.classList.remove("reloading"), 650);
-    if (currentTab === "beranda") renderBeranda();
-    if (currentTab === "riwayat") renderRiwayat();
-    if (currentTab === "kalender") renderKalender();
+async function refreshApp() {
+  _lastDate = today();
+  $('#headerDate').textContent = new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' });
+  const btn = $('#reloadBtn');
+  btn.classList.add('reloading');
+  try {
+    await Sync.pull(); // sinkronisasi manual
+    showToast('✓ Data diperbarui', 'ok');
+  } catch (e) {
+    showToast('✗ Gagal sinkronisasi', 'err');
+  }
+  setTimeout(() => btn.classList.remove('reloading'), 650);
+  if (currentTab === 'beranda') renderBeranda();
+  if (currentTab === 'riwayat') renderRiwayat();
+  if (currentTab === 'kalender') renderKalender();
 }
 
 $("#reloadBtn").addEventListener("click", refreshApp);
@@ -1533,33 +1535,26 @@ function attachRiwayatItemEvents(ctx) {
 
 // ==================== RIWAYAT ====================
 function renderRiwayat() {
-    const pg = $("#page-riwayat");
+    const pg = $('#page-riwayat');
 
     const getRange = () => {
-        const t = today();
-        if (riwayatFilter === "7d") {
-            const from = new Date();
-            from.setDate(from.getDate() - 6);
-            const to = new Date();
-            to.setDate(to.getDate() + 7);
-            return [
-                from.toISOString().split("T")[0],
-                to.toISOString().split("T")[0]
-            ];
-        }
-        if (riwayatFilter === "30d") {
-            const from = new Date();
-            from.setDate(from.getDate() - 29);
-            const to = new Date();
-            to.setDate(to.getDate() + 30);
-            return [
-                from.toISOString().split("T")[0],
-                to.toISOString().split("T")[0]
-            ];
-        }
-        if (riwayatFilter === "custom")
-            return [riwayatFrom || t, riwayatTo || t];
-        return [t, t];
+      const t = today();
+      if (riwayatFilter === '7d') {
+      const from = new Date();
+      from.setDate(from.getDate() - 6);
+      const to = new Date();
+      to.setDate(to.getDate() + 7);
+      return [from.toISOString().split('T')[0], to.toISOString().split('T')[0]];
+      }
+      if (riwayatFilter === '30d') {
+        const from = new Date();
+        from.setDate(from.getDate() - 29);
+        const to = new Date();
+        to.setDate(to.getDate() + 30);
+        return [from.toISOString().split('T')[0], to.toISOString().split('T')[0]];
+      }
+      if (riwayatFilter === 'custom') return [riwayatFrom || t, riwayatTo || t];
+      return [t, t];
     };
 
     const [from, to] = getRange();
@@ -1654,16 +1649,16 @@ function renderKalender() {
         const d = new Date(calYear, calMonth, day);
         const ds = formatYMD(calYear, calMonth, day);
         cells += `<div class="cal-day other-month" data-date="${ds}"><span>${d.getDate()}</span></div>`;
-    }
-    for (let i = 1; i <= lastDay.getDate(); i++) {
+      }
+      for (let i = 1; i <= lastDay.getDate(); i++) {
         const ds = formatYMD(calYear, calMonth, i);
         const isToday = ds === today();
         const hasDot = dateDots[ds];
-        cells += `<div class="cal-day${isToday ? " today" : ""}${hasDot ? " has-data" : ""}" data-date="${ds}">
+        cells += `<div class="cal-day${isToday ? ' today' : ''}${hasDot ? ' has-data' : ''}" data-date="${ds}">
           <span>${i}</span>
-          ${hasDot ? '<div class="cal-day-dot"><div class="dot"></div></div>' : ""}
+          ${hasDot ? '<div class="cal-day-dot"><div class="dot"></div></div>' : ''}
         </div>`;
-    }
+      }
 
     pg.innerHTML = `
     <div class="calendar-header">
@@ -2663,6 +2658,46 @@ function attachNumpad(ctx) {
         });
     });
 }
+
+// ==================== SINKRONISASI PERIODIK ====================
+let syncInterval = null;
+const SYNC_INTERVAL_MS = 15000; // 15 detik
+
+async function periodicSync() {
+  if (document.hidden) return; // jangan sinkron jika tab tidak aktif
+  try {
+    await Sync.pull();
+    // Refresh tampilan sesuai tab aktif
+    if (currentTab === 'beranda') renderBeranda();
+    if (currentTab === 'riwayat') renderRiwayat();
+    if (currentTab === 'kalender') renderKalender();
+    showToast('🔄 Data tersinkronisasi', 'ok');
+  } catch (e) {
+    console.warn('Periodic sync gagal', e);
+  }
+}
+
+function startPeriodicSync() {
+  if (syncInterval) clearInterval(syncInterval);
+  syncInterval = setInterval(periodicSync, SYNC_INTERVAL_MS);
+}
+
+function stopPeriodicSync() {
+  if (syncInterval) {
+    clearInterval(syncInterval);
+    syncInterval = null;
+  }
+}
+
+// Jalankan saat aplikasi dimulai
+document.addEventListener('DOMContentLoaded', () => {
+  startPeriodicSync();
+});
+
+// Hentikan saat halaman ditutup (opsional)
+window.addEventListener('beforeunload', () => {
+  stopPeriodicSync();
+});
 
 // ==================== INIT ====================
 document.addEventListener("DOMContentLoaded", () => {
