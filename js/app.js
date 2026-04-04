@@ -43,6 +43,20 @@ function parseNumberFromInput(value) {
     return isNaN(parsed) ? 0 : parsed;
 }
 
+function deepEqual(a, b) {
+    if (a === b) return true;
+    if (a == null || b == null) return false;
+    if (typeof a !== 'object' || typeof b !== 'object') return false;
+    const keysA = Object.keys(a).sort();
+    const keysB = Object.keys(b).sort();
+    if (keysA.length !== keysB.length) return false;
+    for (let key of keysA) {
+        if (!keysB.includes(key)) return false;
+        if (!deepEqual(a[key], b[key])) return false;
+    }
+    return true;
+}
+
 // ==================== SYNC LAYER ====================
 const SB_URL_KEY = "jp_sb_url";
 const SB_KEY_KEY = "jp_sb_key";
@@ -116,21 +130,29 @@ const Sync = {
     },
 
     async pull() {
-        Sync.setDot("loading");
-        try {
-            const r = await fetch(
-                `${Sync.sbUrl()}/rest/v1/produksi?select=*&order=order_idx.asc`,
-                { headers: Sync.headers() }
-            );
-            if (!r.ok) throw new Error(await r.text());
-            const rows = await r.json();
-            DB.save(rows.map(Sync.fromRow));
-            Sync.setDot("ok");
-        } catch (e) {
-            Sync.setDot("err");
-            throw e;
+    Sync.setDot('loading');
+    try {
+        const r = await fetch(
+            `${Sync.sbUrl()}/rest/v1/produksi?select=*&order=order_idx.asc`,
+            { headers: Sync.headers() }
+        );
+        if (!r.ok) throw new Error(await r.text());
+        const rows = await r.json();
+        const newData = rows.map(Sync.fromRow);
+        const currentData = DB.get();
+        if (!deepEqual(currentData, newData)) {
+            DB.save(newData);
+            Sync.setDot('ok');
+            return true;
+        } else {
+            Sync.setDot('ok');
+            return false;
         }
-    },
+    } catch(e) {
+        Sync.setDot('err');
+        throw e;
+    }
+},
 
     async add(p) {
         Sync.setDot("loading");
@@ -258,6 +280,27 @@ let riwayatFilter = "7d";
 let riwayatFrom = "",
     riwayatTo = "";
 const openCards = new Set();
+let expandedRiwayatIds = new Set();
+
+// Scroll positions untuk setiap tab
+const scrollPositions = {
+    beranda: 0,
+    riwayat: 0,
+    kalender: 0,
+    kalkulator: 0
+};
+
+function saveScrollPosition(tab) {
+    const page = document.querySelector(`#page-${tab}`);
+    if (page) scrollPositions[tab] = page.scrollTop;
+}
+
+function restoreScrollPosition(tab) {
+    const page = document.querySelector(`#page-${tab}`);
+    if (page && scrollPositions[tab] !== undefined) {
+        page.scrollTop = scrollPositions[tab];
+    }
+}
 
 // ==================== THEME ====================
 (function () {
@@ -287,20 +330,23 @@ $("#themeToggle").addEventListener("click", () => {
 let _lastDate = today();
 
 async function refreshApp() {
-  _lastDate = today();
-  $('#headerDate').textContent = new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' });
-  const btn = $('#reloadBtn');
-  btn.classList.add('reloading');
-  try {
-    await Sync.pull(); // sinkronisasi manual
-    showToast('✓ Data diperbarui', 'ok');
-  } catch (e) {
-    showToast('✗ Gagal sinkronisasi', 'err');
-  }
-  setTimeout(() => btn.classList.remove('reloading'), 650);
-  if (currentTab === 'beranda') renderBeranda();
-  if (currentTab === 'riwayat') renderRiwayat();
-  if (currentTab === 'kalender') renderKalender();
+    _lastDate = today();
+    $('#headerDate').textContent = new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' });
+    const btn = $('#reloadBtn');
+    btn.classList.add('reloading');
+    saveScrollPosition(currentTab);
+    try {
+        await Sync.pull(); // paksa sinkron
+        if (currentTab === 'beranda') renderBeranda();
+        if (currentTab === 'riwayat') renderRiwayat();
+        if (currentTab === 'kalender') renderKalender();
+        if (currentTab === 'kalkulator') renderKalkulator();
+        restoreScrollPosition(currentTab);
+        showToast('✓ Data diperbarui', 'ok');
+    } catch (e) {
+        showToast('✗ Gagal sinkronisasi', 'err');
+    }
+    setTimeout(() => btn.classList.remove('reloading'), 650);
 }
 
 $("#reloadBtn").addEventListener("click", refreshApp);
@@ -412,10 +458,9 @@ scheduleMidnight();
 
 // ==================== NAVIGATION ====================
 function setTab(tab) {
+    saveScrollPosition(currentTab);
     currentTab = tab;
-    $$(".nav-item").forEach(el =>
-        el.classList.toggle("active", el.dataset.tab === tab)
-    );
+    $$(".nav-item").forEach(el => el.classList.toggle("active", el.dataset.tab === tab));
     $$(".page").forEach(el => el.classList.remove("active"));
     $(`#page-${tab}`).classList.add("active");
     const tabs = ["beranda", "riwayat", "kalkulator"];
@@ -425,6 +470,7 @@ function setTab(tab) {
     if (tab === "riwayat") renderRiwayat();
     if (tab === "kalender") renderKalender();
     if (tab === "kalkulator") renderKalkulator();
+    restoreScrollPosition(tab);
 }
 
 $$(".nav-item").forEach(el => {
@@ -1567,6 +1613,9 @@ function renderRiwayat() {
     const dates = Object.keys(grouped).sort().reverse();
 
     const customVisible = riwayatFilter === "custom" ? "visible" : "";
+// Simpan id item yang sedang expanded
+const currentExpanded = $$('.riwayat-item.expanded').map(el => el.dataset.rid);
+expandedRiwayatIds = new Set(currentExpanded);
 
     pg.innerHTML = `
     <div class="filter-row">
@@ -1599,6 +1648,12 @@ function renderRiwayat() {
     }`;
 
     attachRiwayatItemEvents(pg);
+    // Pulihkan expanded
+$$('.riwayat-item', pg).forEach(item => {
+    if (expandedRiwayatIds.has(item.dataset.rid)) {
+        item.classList.add('expanded');
+    }
+});
 
     $$(".riwayat-day-group", pg).forEach(grp => makeSortable(grp));
 
@@ -2664,17 +2719,21 @@ let syncInterval = null;
 const SYNC_INTERVAL_MS = 15000; // 15 detik
 
 async function periodicSync() {
-  if (document.hidden) return; // jangan sinkron jika tab tidak aktif
-  try {
-    await Sync.pull();
-    // Refresh tampilan sesuai tab aktif
-    if (currentTab === 'beranda') renderBeranda();
-    if (currentTab === 'riwayat') renderRiwayat();
-    if (currentTab === 'kalender') renderKalender();
-    showToast('🔄 Data tersinkronisasi', 'ok');
-  } catch (e) {
-    console.warn('Periodic sync gagal', e);
-  }
+    if (document.hidden) return;
+    try {
+        const changed = await Sync.pull(); // true jika data berubah
+        if (changed) {
+            saveScrollPosition(currentTab);
+            if (currentTab === 'beranda') renderBeranda();
+            if (currentTab === 'riwayat') renderRiwayat();
+            if (currentTab === 'kalender') renderKalender();
+            if (currentTab === 'kalkulator') renderKalkulator();
+            restoreScrollPosition(currentTab);
+            showToast('🔄 Data tersinkronisasi', 'ok');
+        }
+    } catch (e) {
+        console.warn('Periodic sync gagal', e);
+    }
 }
 
 function startPeriodicSync() {
@@ -2689,19 +2748,9 @@ function stopPeriodicSync() {
   }
 }
 
-// Jalankan saat aplikasi dimulai
-document.addEventListener('DOMContentLoaded', () => {
-  startPeriodicSync();
-});
-
 // Hentikan saat halaman ditutup (opsional)
 window.addEventListener('beforeunload', () => {
   stopPeriodicSync();
-});
-
-// ==================== INIT ====================
-document.addEventListener("DOMContentLoaded", () => {
-    setTab("beranda");
 });
 
 if ("serviceWorker" in navigator) {
@@ -2747,7 +2796,8 @@ window.setTab = function (tab) {
     setTimeout(attachAutoHideListener, 100);
 };
 
-// Inisialisasi pertama
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener('DOMContentLoaded', () => {
+    setTab('beranda');
+    startPeriodicSync();
     attachAutoHideListener();
 });
