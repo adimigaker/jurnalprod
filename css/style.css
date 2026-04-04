@@ -1929,3 +1929,16 @@ html.light .icon-moon { display: none; }
 .product-cols.double .container-row-top {
   justify-content: center;
 }
+
+/* Pastikan pull indicator berada di atas header */
+#pullIndicator {
+  z-index: 102;
+  top: 0;
+  position: absolute;
+  background: var(--bg);
+}
+
+/* Karena header fixed, pull indicator perlu ruang di atas konten */
+.page.active {
+  scroll-padding-top: 60px; /* opsional, beri ruang saat scroll ke anchor */
+}
