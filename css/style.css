@@ -1376,12 +1376,13 @@ html.light .icon-moon {
 }
 
 .riwayat-detail {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.25s cubic-bezier(0.4,0,0.2,1);
 }
 .riwayat-item.expanded .riwayat-detail {
-    max-height: 600px;
+  max-height: 600px;
+  overflow-y: auto;  /* fitur scroll */
 }
 .riwayat-detail-inner {
     padding: 0 14px 12px;
