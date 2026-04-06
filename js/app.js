@@ -2739,7 +2739,7 @@ function attachNumpad(ctx) {
 
 // ==================== SINKRONISASI PERIODIK ====================
 let syncInterval = null;
-const SYNC_INTERVAL_MS = 15000; // 15 detik
+const SYNC_INTERVAL_MS = 300000; // 15 detik
 
 async function periodicSync() {
     if (document.hidden) return;
