@@ -25,7 +25,7 @@ const fmtDay = d =>
         month: "short"
     });
 function formatYMD(year, month, day) {
-  return `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
 // Format angka dengan koma sebagai pemisah desimal
@@ -46,7 +46,7 @@ function parseNumberFromInput(value) {
 function deepEqual(a, b) {
     if (a === b) return true;
     if (a == null || b == null) return false;
-    if (typeof a !== 'object' || typeof b !== 'object') return false;
+    if (typeof a !== "object" || typeof b !== "object") return false;
     const keysA = Object.keys(a).sort();
     const keysB = Object.keys(b).sort();
     if (keysA.length !== keysB.length) return false;
@@ -130,29 +130,29 @@ const Sync = {
     },
 
     async pull() {
-    Sync.setDot('loading');
-    try {
-        const r = await fetch(
-            `${Sync.sbUrl()}/rest/v1/produksi?select=*&order=order_idx.asc`,
-            { headers: Sync.headers() }
-        );
-        if (!r.ok) throw new Error(await r.text());
-        const rows = await r.json();
-        const newData = rows.map(Sync.fromRow);
-        const currentData = DB.get();
-        if (!deepEqual(currentData, newData)) {
-            DB.save(newData);
-            Sync.setDot('ok');
-            return true;
-        } else {
-            Sync.setDot('ok');
-            return false;
+        Sync.setDot("loading");
+        try {
+            const r = await fetch(
+                `${Sync.sbUrl()}/rest/v1/produksi?select=*&order=order_idx.asc`,
+                { headers: Sync.headers() }
+            );
+            if (!r.ok) throw new Error(await r.text());
+            const rows = await r.json();
+            const newData = rows.map(Sync.fromRow);
+            const currentData = DB.get();
+            if (!deepEqual(currentData, newData)) {
+                DB.save(newData);
+                Sync.setDot("ok");
+                return true;
+            } else {
+                Sync.setDot("ok");
+                return false;
+            }
+        } catch (e) {
+            Sync.setDot("err");
+            throw e;
         }
-    } catch(e) {
-        Sync.setDot('err');
-        throw e;
-    }
-},
+    },
 
     async add(p) {
         Sync.setDot("loading");
@@ -331,22 +331,26 @@ let _lastDate = today();
 
 async function refreshApp() {
     _lastDate = today();
-    $('#headerDate').textContent = new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' });
-    const btn = $('#reloadBtn');
-    btn.classList.add('reloading');
+    $("#headerDate").textContent = new Date().toLocaleDateString("id-ID", {
+        weekday: "long",
+        day: "numeric",
+        month: "long"
+    });
+    const btn = $("#reloadBtn");
+    btn.classList.add("reloading");
     saveScrollPosition(currentTab);
     try {
         await Sync.pull(); // paksa sinkron
-        if (currentTab === 'beranda') renderBeranda();
-        if (currentTab === 'riwayat') renderRiwayat();
-        if (currentTab === 'kalender') renderKalender();
-        if (currentTab === 'kalkulator') renderKalkulator();
+        if (currentTab === "beranda") renderBeranda();
+        if (currentTab === "riwayat") renderRiwayat();
+        if (currentTab === "kalender") renderKalender();
+        if (currentTab === "kalkulator") renderKalkulator();
         restoreScrollPosition(currentTab);
-        showToast('✓ Data diperbarui', 'ok');
+        showToast("✓ Data diperbarui", "ok");
     } catch (e) {
-        showToast('✗ Gagal sinkronisasi', 'err');
+        showToast("✗ Gagal sinkronisasi", "err");
     }
-    setTimeout(() => btn.classList.remove('reloading'), 650);
+    setTimeout(() => btn.classList.remove("reloading"), 650);
 }
 
 $("#reloadBtn").addEventListener("click", refreshApp);
@@ -460,7 +464,9 @@ scheduleMidnight();
 function setTab(tab) {
     saveScrollPosition(currentTab);
     currentTab = tab;
-    $$(".nav-item").forEach(el => el.classList.toggle("active", el.dataset.tab === tab));
+    $$(".nav-item").forEach(el =>
+        el.classList.toggle("active", el.dataset.tab === tab)
+    );
     $$(".page").forEach(el => el.classList.remove("active"));
     $(`#page-${tab}`).classList.add("active");
     const tabs = ["beranda", "riwayat", "kalkulator"];
@@ -602,6 +608,7 @@ function renderProductCard(p) {
                 const result = (c.val || 0) * (c.mult || 1);
                 return `
       <div class="container-row" style="${accentStyle}">
+      <div class="container-index">${i+1}</div>
        <div class="container-row-top">
         <input class="container-input" type="text" value="${formatNumberForDisplay(c.val)}" min="0"
          data-pid="${p.id}" data-col="${colKey}" data-cidx="${i}" placeholder="0" />
@@ -756,11 +763,11 @@ function renderSummary(p) {
     const calcCol = (containers, target) => {
         let total = 0;
         const lines = containers
-            .map(c => {
+            .map((c, i) => {
                 const sub = (c.val || 0) * (c.mult || 1);
                 total += sub;
                 return `<div class="summary-row">
-        <span class="summary-label">${formatNumberForDisplay(c.val)} × ${c.mult}</span>
+        <span class="summary-label">${i+1}. ${formatNumberForDisplay(c.val)} × ${c.mult}</span>
         <span class="summary-val">${formatNumberForDisplay(sub)} ${unit}</span>
       </div>`;
             })
@@ -781,7 +788,10 @@ function renderSummary(p) {
                 : `${formatNumberForDisplay(diff)}`;
         let noteHtml = "";
         if (p.note) {
-            noteHtml = `<div class="summary-note" style="margin-top:8px; font-size:11px; color:var(--text-muted); border-top:1px solid var(--border); padding-top:6px;">📝 Catatan: ${p.note}</div>`;
+            noteHtml = `<div class="summary-note">
+                <div class="summary-note-label">📝 Catatan:</div>
+                <div class="summary-note-text">${p.note.replace(/\n/g, '<br>')}</div>
+            </div>`;
         }
         return `<div class="summary-box">
       <div class="summary-title">Ringkasan</div>
@@ -819,9 +829,12 @@ function renderSummary(p) {
             grandDiff > 0
                 ? `+${formatNumberForDisplay(grandDiff)}`
                 : `${formatNumberForDisplay(grandDiff)}`;
-        let noteHtml = "";
+        let noteHtml = '';
         if (p.note) {
-            noteHtml = `<div class="summary-note" style="margin-top:8px; font-size:11px; color:var(--text-muted); border-top:1px solid var(--border); padding-top:6px;">📝 Catatan: ${p.note}</div>`;
+            noteHtml = `<div class="summary-note">
+                <div class="summary-note-label">📝 Catatan:</div>
+                <div class="summary-note-text">${p.note.replace(/\n/g, '<br>')}</div>
+            </div>`;
         }
         return `<div class="summary-box">
       <div class="summary-title">Ringkasan</div>
@@ -1581,26 +1594,33 @@ function attachRiwayatItemEvents(ctx) {
 
 // ==================== RIWAYAT ====================
 function renderRiwayat() {
-    const pg = $('#page-riwayat');
+    const pg = $("#page-riwayat");
 
     const getRange = () => {
-      const t = today();
-      if (riwayatFilter === '7d') {
-      const from = new Date();
-      from.setDate(from.getDate() - 6);
-      const to = new Date();
-      to.setDate(to.getDate() + 7);
-      return [from.toISOString().split('T')[0], to.toISOString().split('T')[0]];
-      }
-      if (riwayatFilter === '30d') {
-        const from = new Date();
-        from.setDate(from.getDate() - 29);
-        const to = new Date();
-        to.setDate(to.getDate() + 30);
-        return [from.toISOString().split('T')[0], to.toISOString().split('T')[0]];
-      }
-      if (riwayatFilter === 'custom') return [riwayatFrom || t, riwayatTo || t];
-      return [t, t];
+        const t = today();
+        if (riwayatFilter === "7d") {
+            const from = new Date();
+            from.setDate(from.getDate() - 6);
+            const to = new Date();
+            to.setDate(to.getDate() + 7);
+            return [
+                from.toISOString().split("T")[0],
+                to.toISOString().split("T")[0]
+            ];
+        }
+        if (riwayatFilter === "30d") {
+            const from = new Date();
+            from.setDate(from.getDate() - 29);
+            const to = new Date();
+            to.setDate(to.getDate() + 30);
+            return [
+                from.toISOString().split("T")[0],
+                to.toISOString().split("T")[0]
+            ];
+        }
+        if (riwayatFilter === "custom")
+            return [riwayatFrom || t, riwayatTo || t];
+        return [t, t];
     };
 
     const [from, to] = getRange();
@@ -1613,9 +1633,11 @@ function renderRiwayat() {
     const dates = Object.keys(grouped).sort().reverse();
 
     const customVisible = riwayatFilter === "custom" ? "visible" : "";
-// Simpan id item yang sedang expanded
-const currentExpanded = $$('.riwayat-item.expanded').map(el => el.dataset.rid);
-expandedRiwayatIds = new Set(currentExpanded);
+    // Simpan id item yang sedang expanded
+    const currentExpanded = $$(".riwayat-item.expanded").map(
+        el => el.dataset.rid
+    );
+    expandedRiwayatIds = new Set(currentExpanded);
 
     pg.innerHTML = `
     <div class="filter-row">
@@ -1649,11 +1671,11 @@ expandedRiwayatIds = new Set(currentExpanded);
 
     attachRiwayatItemEvents(pg);
     // Pulihkan expanded
-$$('.riwayat-item', pg).forEach(item => {
-    if (expandedRiwayatIds.has(item.dataset.rid)) {
-        item.classList.add('expanded');
-    }
-});
+    $$(".riwayat-item", pg).forEach(item => {
+        if (expandedRiwayatIds.has(item.dataset.rid)) {
+            item.classList.add("expanded");
+        }
+    });
 
     $$(".riwayat-day-group", pg).forEach(grp => makeSortable(grp));
 
@@ -1704,16 +1726,16 @@ function renderKalender() {
         const d = new Date(calYear, calMonth, day);
         const ds = formatYMD(calYear, calMonth, day);
         cells += `<div class="cal-day other-month" data-date="${ds}"><span>${d.getDate()}</span></div>`;
-      }
-      for (let i = 1; i <= lastDay.getDate(); i++) {
+    }
+    for (let i = 1; i <= lastDay.getDate(); i++) {
         const ds = formatYMD(calYear, calMonth, i);
         const isToday = ds === today();
         const hasDot = dateDots[ds];
-        cells += `<div class="cal-day${isToday ? ' today' : ''}${hasDot ? ' has-data' : ''}" data-date="${ds}">
+        cells += `<div class="cal-day${isToday ? " today" : ""}${hasDot ? " has-data" : ""}" data-date="${ds}">
           <span>${i}</span>
-          ${hasDot ? '<div class="cal-day-dot"><div class="dot"></div></div>' : ''}
+          ${hasDot ? '<div class="cal-day-dot"><div class="dot"></div></div>' : ""}
         </div>`;
-      }
+    }
 
     pg.innerHTML = `
     <div class="calendar-header">
@@ -2724,33 +2746,33 @@ async function periodicSync() {
         const changed = await Sync.pull(); // true jika data berubah
         if (changed) {
             saveScrollPosition(currentTab);
-            if (currentTab === 'beranda') renderBeranda();
-            if (currentTab === 'riwayat') renderRiwayat();
-            if (currentTab === 'kalender') renderKalender();
-            if (currentTab === 'kalkulator') renderKalkulator();
+            if (currentTab === "beranda") renderBeranda();
+            if (currentTab === "riwayat") renderRiwayat();
+            if (currentTab === "kalender") renderKalender();
+            if (currentTab === "kalkulator") renderKalkulator();
             restoreScrollPosition(currentTab);
-            showToast('🔄 Data tersinkronisasi', 'ok');
+            showToast("🔄 Data tersinkronisasi", "ok");
         }
     } catch (e) {
-        console.warn('Periodic sync gagal', e);
+        console.warn("Periodic sync gagal", e);
     }
 }
 
 function startPeriodicSync() {
-  if (syncInterval) clearInterval(syncInterval);
-  syncInterval = setInterval(periodicSync, SYNC_INTERVAL_MS);
+    if (syncInterval) clearInterval(syncInterval);
+    syncInterval = setInterval(periodicSync, SYNC_INTERVAL_MS);
 }
 
 function stopPeriodicSync() {
-  if (syncInterval) {
-    clearInterval(syncInterval);
-    syncInterval = null;
-  }
+    if (syncInterval) {
+        clearInterval(syncInterval);
+        syncInterval = null;
+    }
 }
 
 // Hentikan saat halaman ditutup (opsional)
-window.addEventListener('beforeunload', () => {
-  stopPeriodicSync();
+window.addEventListener("beforeunload", () => {
+    stopPeriodicSync();
 });
 
 if ("serviceWorker" in navigator) {
@@ -2796,8 +2818,8 @@ window.setTab = function (tab) {
     setTimeout(attachAutoHideListener, 100);
 };
 
-document.addEventListener('DOMContentLoaded', () => {
-    setTab('beranda');
+document.addEventListener("DOMContentLoaded", () => {
+    setTab("beranda");
     startPeriodicSync();
     attachAutoHideListener();
 });
