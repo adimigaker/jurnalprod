@@ -1218,6 +1218,7 @@ function renderEditCol(label, colKey, target, containers) {
             const result = (c.val || 0) * (c.mult || 1);
             return `
     <div class="container-row" style="${accentStyle}">
+    <div class="container-index">${i+1}</div>
       <div class="container-row-top">
         <input class="container-input edit-val-input" type="text" value="${formatNumberForDisplay(c.val)}"
           data-col="${colKey}" data-cidx="${i}" placeholder="0" />
