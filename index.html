@@ -14,6 +14,49 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/style.css" />
+  <style>
+    /* fallback untuk checkbox style jika belum ada di style.css */
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      margin-bottom: 8px;
+    }
+    .checkbox-row.checked {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+    .checkbox-custom {
+      width: 20px; height: 20px;
+      border: 2px solid var(--border);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .checkbox-row.checked .checkbox-custom {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+    .checkbox-custom svg {
+      width: 12px; height: 12px;
+      opacity: 0;
+    }
+    .checkbox-row.checked .checkbox-custom svg {
+      opacity: 1;
+    }
+    .sub-targets {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+  </style>
 </head>
 <body>
 <div id="app">
@@ -39,7 +82,7 @@
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
       </button>
       <button class="theme-toggle" id="settingsBtn" title="Pengaturan">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83-2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       </button>
       <button class="theme-toggle" id="reloadBtn" title="Reload">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
@@ -94,16 +137,30 @@
       <input class="field-input" type="text" id="inputNama" placeholder="Contoh: Ayam Geprek, Dimsum..." />
     </div>
 
+    <!-- Dua checkbox untuk mode -->
     <div class="field-group">
-      <div class="checkbox-row" id="checkboxRow">
+      <div class="checkbox-row" id="splitCheckboxRow">
         <div class="checkbox-custom">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
         </div>
         <div>
-          <div class="checkbox-text">Bagi Dua Porsi</div>
-          <div class="checkbox-desc">Porsi Besar &amp; Porsi Kecil dengan target masing-masing</div>
+          <div class="checkbox-text">Split Mode (Porsi Kecil + Besar)</div>
+          <div class="checkbox-desc">Aktifkan dua kolom input dengan target masing-masing</div>
         </div>
       </div>
+      <div class="checkbox-row" id="sampleCheckboxRow">
+        <div class="checkbox-custom">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div>
+          <div class="checkbox-text">Sample Mode (Mentah, Proses, Jadi)</div>
+          <div class="checkbox-desc">Aktifkan tiga kolom input untuk sampel (tanpa target, satuan kg)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Target untuk mode Single & Split -->
+    <div class="field-group" id="targetFields">
       <div class="sub-targets" id="subTargets">
         <div>
           <label class="field-label">Target Porsi Kecil</label>
@@ -198,6 +255,7 @@
       </div>
     </div>
 
+    <!-- Warna Split Mode -->
     <div class="field-group">
       <div class="field-label" style="margin-bottom:10px">Warna Split Mode</div>
 
@@ -231,6 +289,53 @@
         </div>
       </div>
     </div>
+    
+    <!-- Warna Sampel Mode -->
+    <div class="field-group" style="margin-top: 16px">
+      <div class="field-label" style="margin-bottom: 10px">Warna Sampel Mode</div>
+
+      <div style="margin-bottom: 12px">
+        <label class="field-label" style="font-weight:400;margin-bottom:6px;display:block">Berat Mentah</label>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">
+          <button class="color-swatch" data-col="sample-raw" data-hex="#3fb950" style="background:#3fb950"></button>
+          <button class="color-swatch" data-col="sample-raw" data-hex="#2ea043" style="background:#2ea043"></button>
+          <button class="color-swatch" data-col="sample-raw" data-hex="#56d364" style="background:#56d364"></button>
+          <button class="color-swatch" data-col="sample-raw" data-hex="#1f7a3c" style="background:#1f7a3c"></button>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <input type="color" id="sampleRawPicker" value="#3fb950" style="width:36px;height:36px;border:1px solid var(--border);border-radius:8px;cursor:pointer;padding:2px;background:none" />
+          <input class="field-input" type="text" id="sampleRawHex" placeholder="#3fb950" style="flex:1;font-family:var(--mono);font-size:13px" />
+        </div>
+      </div>
+
+      <div style="margin-bottom: 12px">
+        <label class="field-label" style="font-weight:400;margin-bottom:6px;display:block">Berat Proses</label>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">
+          <button class="color-swatch" data-col="sample-soaked" data-hex="#d29922" style="background:#d29922"></button>
+          <button class="color-swatch" data-col="sample-soaked" data-hex="#e3b341" style="background:#e3b341"></button>
+          <button class="color-swatch" data-col="sample-soaked" data-hex="#b57c1c" style="background:#b57c1c"></button>
+          <button class="color-swatch" data-col="sample-soaked" data-hex="#f5c542" style="background:#f5c542"></button>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <input type="color" id="sampleSoakedPicker" value="#d29922" style="width:36px;height:36px;border:1px solid var(--border);border-radius:8px;cursor:pointer;padding:2px;background:none" />
+          <input class="field-input" type="text" id="sampleSoakedHex" placeholder="#d29922" style="flex:1;font-family:var(--mono);font-size:13px" />
+        </div>
+      </div>
+
+      <div>
+        <label class="field-label" style="font-weight:400;margin-bottom:6px;display:block">Berat Jadi</label>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">
+          <button class="color-swatch" data-col="sample-stirfried" data-hex="#388bfd" style="background:#388bfd"></button>
+          <button class="color-swatch" data-col="sample-stirfried" data-hex="#58a6ff" style="background:#58a6ff"></button>
+          <button class="color-swatch" data-col="sample-stirfried" data-hex="#1f6feb" style="background:#1f6feb"></button>
+          <button class="color-swatch" data-col="sample-stirfried" data-hex="#79c0ff" style="background:#79c0ff"></button>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <input type="color" id="sampleStirfriedPicker" value="#388bfd" style="width:36px;height:36px;border:1px solid var(--border);border-radius:8px;cursor:pointer;padding:2px;background:none" />
+          <input class="field-input" type="text" id="sampleStirfriedHex" placeholder="#388bfd" style="flex:1;font-family:var(--mono);font-size:13px" />
+        </div>
+      </div>
+    </div>
 
     <div id="syncStatus" style="display:none;margin-bottom:12px;padding:10px 12px;border-radius:var(--radius-sm);font-size:13px;"></div>
 
@@ -242,7 +347,7 @@
   </div>
 </div>
 
-<!-- Modal Edit Produk -->
+<!-- Modal Edit Produk (tanpa checkbox split/sample) -->
 <div class="modal-overlay" id="editModalOverlay">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
