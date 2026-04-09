@@ -1869,6 +1869,35 @@ html.light .icon-moon {
     background: var(--accent);
     opacity: 0.85;
 }
+
+/* ===== SCREENSAVER OVERLAY ===== */
+.screensaver-overlay {
+    position: fixed;
+    inset: 0;
+    background: #000000;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+.screensaver-overlay.active {
+    opacity: 1;
+    pointer-events: all;  /* overlay menangkap semua event */
+}
+.screensaver-logo svg {
+    width: min(25vw, 100px); /* diperkecil, maksimal 100px */
+    height: auto;
+    animation: gentlePulse 2s ease-in-out infinite;
+    pointer-events: none; /* biar event tidak tertahan di logo, tetap ke overlay */
+}
+@keyframes gentlePulse {
+    0%, 100% { opacity: 0.7; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.02); }
+}
+
 /* ===== AKHIR NUMPAD ===== */
 
 /* Chevron icon di header (bukan button, ikut gaya riwayat) */
@@ -2621,3 +2650,4 @@ html.light .icon-moon {
     border-color: var(--sample-stirfried) !important;
     background: var(--sample-stirfried-bg) !important;
 }
+
