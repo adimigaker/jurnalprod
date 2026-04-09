@@ -2107,6 +2107,179 @@ window.setTab = function(tab) {
     originalSetTab(tab);
     setTimeout(attachAutoHideListener, 100);
 };
+
+// ==================== WAKE LOCK & SCREENSAVER ==================
+let wakeLock = null;
+let idleTimer = null;
+let screensaverActive = false;
+let wakeLockEnabled = false;
+let screensaverDelay = 60; // detik
+
+// Referensi elemen
+const toggleWakeLock = document.getElementById('toggleWakeLock');
+const screensaverSlider = document.getElementById('screensaverDelaySlider');
+const screensaverVal = document.getElementById('screensaverDelayVal');
+
+// Buat overlay screensaver (hanya sekali)
+function createScreensaverOverlay() {
+    if (document.querySelector('.screensaver-overlay')) return;
+    const overlay = document.createElement('div');
+    overlay.className = 'screensaver-overlay';
+    overlay.innerHTML = `
+        <div class="screensaver-logo">
+            <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 100 100">
+                <rect width="100" height="100" rx="20" fill="#388bfd" />
+                <text x="50" y="55" text-anchor="middle" dominant-baseline="middle" font-size="65" fill="white">🍽️</text>
+            </svg>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+    
+    // Event untuk menutup screensaver tanpa bocor ke bawah
+    const closeScreensaver = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (screensaverActive) {
+            hideScreensaver();
+            resetIdleTimer();
+        }
+        return false;
+    };
+    
+    overlay.addEventListener('pointerdown', closeScreensaver);
+    overlay.addEventListener('touchstart', closeScreensaver);
+    
+    return overlay;
+}
+
+function showScreensaver() {
+    if (screensaverActive) return;
+    const overlay = document.querySelector('.screensaver-overlay');
+    if (!overlay) return;
+    screensaverActive = true;
+    overlay.classList.add('active');
+    // Saat screensaver muncul, kita tetap pertahankan wake lock (jika aktif)
+}
+
+function hideScreensaver() {
+    if (!screensaverActive) return;
+    const overlay = document.querySelector('.screensaver-overlay');
+    if (overlay) overlay.classList.remove('active');
+    screensaverActive = false;
+}
+
+// Reset timer idle (dipanggil setiap ada interaksi)
+function resetIdleTimer() {
+    if (!wakeLockEnabled) return;
+    if (idleTimer) clearTimeout(idleTimer);
+    // Jika screensaver sedang aktif, kita sembunyikan dulu
+    if (screensaverActive) hideScreensaver();
+    // Set timer baru
+    idleTimer = setTimeout(() => {
+        if (wakeLockEnabled && !screensaverActive) {
+            showScreensaver();
+        }
+    }, screensaverDelay * 1000);
+}
+
+// Fungsi untuk mengaktifkan/menonaktifkan Wake Lock
+async function setWakeLock(enable) {
+    if (enable) {
+        if (wakeLock === null) {
+            try {
+                wakeLock = await navigator.wakeLock.request('screen');
+                wakeLock.addEventListener('release', () => {
+                    wakeLock = null;
+                });
+                console.log('Wake Lock aktif');
+            } catch (err) {
+                console.warn('Wake Lock gagal:', err);
+                showToast('❌ Wake Lock tidak didukung browser ini', 'err');
+                toggleWakeLock.checked = false;
+                wakeLockEnabled = false;
+                return;
+            }
+        }
+        wakeLockEnabled = true;
+        // Reset timer idle
+        resetIdleTimer();
+        // Pasang event listener interaksi
+        attachIdleEvents();
+    } else {
+        if (wakeLock) {
+            await wakeLock.release();
+            wakeLock = null;
+        }
+        wakeLockEnabled = false;
+        if (idleTimer) clearTimeout(idleTimer);
+        hideScreensaver();
+        removeIdleEvents();
+    }
+}
+
+// Event listener untuk interaksi pengguna
+let idleEventsAttached = false;
+function attachIdleEvents() {
+    if (idleEventsAttached) return;
+    const events = ['touchstart', 'mousemove', 'click', 'keydown'];
+    events.forEach(ev => document.addEventListener(ev, resetIdleTimer));
+    idleEventsAttached = true;
+}
+function removeIdleEvents() {
+    if (!idleEventsAttached) return;
+    const events = ['touchstart', 'mousemove', 'click', 'keydown'];
+    events.forEach(ev => document.removeEventListener(ev, resetIdleTimer));
+    idleEventsAttached = false;
+}
+
+// Event listener untuk toggle dan slider
+if (toggleWakeLock) {
+    toggleWakeLock.addEventListener('change', async (e) => {
+        const isChecked = e.target.checked;
+        localStorage.setItem('jp_wake_lock', isChecked ? '1' : '0');
+        await setWakeLock(isChecked);
+    });
+}
+if (screensaverSlider) {
+    screensaverSlider.addEventListener('input', () => {
+        const val = parseInt(screensaverSlider.value, 10);
+        screensaverVal.textContent = val;
+        screensaverDelay = val;
+        localStorage.setItem('jp_screensaver_delay', val);
+        if (wakeLockEnabled) resetIdleTimer();
+    });
+}
+
+// Inisialisasi dari localStorage
+function initWakeLockAndScreensaver() {
+    createScreensaverOverlay();
+    const savedWakeLock = localStorage.getItem('jp_wake_lock') === '1';
+    const savedDelay = parseInt(localStorage.getItem('jp_screensaver_delay'), 10);
+    if (!isNaN(savedDelay) && savedDelay >= 5 && savedDelay <= 300) {
+        screensaverDelay = savedDelay;
+        if (screensaverSlider) screensaverSlider.value = savedDelay;
+        if (screensaverVal) screensaverVal.textContent = savedDelay;
+    } else {
+        screensaverDelay = 60;
+        if (screensaverSlider) screensaverSlider.value = 60;
+        if (screensaverVal) screensaverVal.textContent = 60;
+    }
+    if (toggleWakeLock) toggleWakeLock.checked = savedWakeLock;
+    if (savedWakeLock) {
+        setWakeLock(true);
+    } else {
+        setWakeLock(false);
+    }
+}
+
+// Panggil inisialisasi setelah DOM siap
+// (tambahkan di dalam DOMContentLoaded atau di akhir file)
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initWakeLockAndScreensaver);
+} else {
+    initWakeLockAndScreensaver();
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     setTab("beranda");
     startPeriodicSync();
