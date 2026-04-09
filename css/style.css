@@ -49,6 +49,12 @@ html.dark {
     --col-kecil-bg: #2d1517;
     --col-besar: #388bfd;
     --col-besar-bg: #1c2d44;
+    --sample-raw: #3fb950;
+    --sample-raw-bg: rgba(63, 185, 80, 0.08);
+    --sample-soaked: #d29922;
+    --sample-soaked-bg: rgba(210, 153, 34, 0.08);
+    --sample-stirfried: #388bfd;
+    --sample-stirfried-bg: rgba(56, 139, 253, 0.08);
 }
 
 html.light {
@@ -78,6 +84,12 @@ html.light {
     --col-kecil-bg: #fff0ee;
     --col-besar: #0969da;
     --col-besar-bg: #ddf4ff;
+    --sample-raw: #1a7f37;
+    --sample-raw-bg: #dafbe1;
+    --sample-soaked: #9a6700;
+    --sample-soaked-bg: #fff8c5;
+    --sample-stirfried: #0969da;
+    --sample-stirfried-bg: #ddf4ff;
 }
 
 @media (prefers-color-scheme: light) {
@@ -570,6 +582,10 @@ html.light .icon-moon {
 }
 .product-cols.double {
     grid-template-columns: 1fr 1fr;
+}
+.product-cols.triple {
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
 }
 
 .col-section {
@@ -1878,35 +1894,102 @@ html.light .icon-moon {
     --stepper-size-split: clamp(32px, 9vw, 44px);
 }
 
-/* Single mode */
-#page-beranda .product-cols.single .mult-step-btn {
+/* Single mode - lebih spesifik dengan .product-card */
+#page-beranda .product-card .product-cols.single .mult-step-btn {
     width: var(--stepper-size-single);
     height: var(--stepper-size-single);
     font-size: clamp(18px, 5vw, 24px);
 }
-#page-beranda .product-cols.single .mult-step-input {
+#page-beranda .product-card .product-cols.single .mult-step-input {
     width: var(--stepper-size-single);
     height: var(--stepper-size-single);
     font-size: clamp(13px, 4vw, 16px);
 }
-#page-beranda .product-cols.single .container-input {
+#page-beranda .product-card .product-cols.single .container-input {
     font-size: clamp(22px, 6vw, 28px);
     padding: 10px;
     height: var(--input-size-single);
     max-width: min(200px, 50vw);
 }
-#page-beranda .product-cols.single .mult-result {
+#page-beranda .product-card .product-cols.single .mult-result {
     font-size: clamp(17px, 5vw, 22px);
 }
-#page-beranda .product-cols.single .container-row-top,
-#page-beranda .product-cols.single .container-row-bottom {
+#page-beranda .product-card .product-cols.single .container-row-top,
+#page-beranda .product-card .product-cols.single .container-row-bottom {
     justify-content: center;
 }
-#page-beranda .product-cols.single .container-row-result {
+#page-beranda .product-card .product-cols.single .container-row-result {
     padding-top: 2px;
     margin-top: 1px;
 }
-#page-beranda .product-cols.single .add-container-btn {
+#page-beranda .product-card .product-cols.single .add-container-btn {
+    max-width: 220px;
+    margin: 12px auto 0 auto;
+}
+
+/* ===== SAMPLE MODE (vertical) - menggunakan ukuran yang sama dengan single mode ===== */
+/* Beranda: sample vertical */
+#page-beranda .sample-vertical .container-input {
+    font-size: clamp(22px, 6vw, 28px);
+    padding: 10px;
+    height: var(--input-size-single);
+    max-width: min(200px, 50vw);
+}
+#page-beranda .sample-vertical .mult-step-btn {
+    width: var(--stepper-size-single);
+    height: var(--stepper-size-single);
+    font-size: clamp(18px, 5vw, 24px);
+}
+#page-beranda .sample-vertical .mult-step-input {
+    width: var(--stepper-size-single);
+    height: var(--stepper-size-single);
+    font-size: clamp(13px, 4vw, 16px);
+}
+#page-beranda .sample-vertical .mult-result {
+    font-size: clamp(17px, 5vw, 22px);
+}
+#page-beranda .sample-vertical .container-row-top,
+#page-beranda .sample-vertical .container-row-bottom {
+    justify-content: center;
+}
+#page-beranda .sample-vertical .container-row-result {
+    padding-top: 2px;
+    margin-top: 1px;
+}
+#page-beranda .sample-vertical .add-container-btn {
+    max-width: 220px;
+    margin: 12px auto 0 auto;
+}
+
+/* Edit modal: sample vertical */
+#editContainerArea .sample-vertical .container-input {
+    font-size: clamp(22px, 6vw, 28px);
+    padding: 10px;
+    height: var(--input-size-single);
+    max-width: min(200px, 50vw);
+}
+#editContainerArea .sample-vertical .mult-step-btn {
+    width: var(--stepper-size-single);
+    height: var(--stepper-size-single);
+    font-size: clamp(18px, 5vw, 24px);
+}
+#editContainerArea .sample-vertical .mult-step-input {
+    width: var(--stepper-size-single);
+    height: var(--stepper-size-single);
+    font-size: clamp(13px, 4vw, 16px);
+}
+#editContainerArea .sample-vertical .mult-result {
+    font-size: clamp(17px, 5vw, 22px);
+}
+#editContainerArea .sample-vertical .container-row-top,
+#editContainerArea .sample-vertical .container-row-bottom {
+    justify-content: center;
+}
+#editContainerArea .sample-vertical .container-row-result {
+    padding-top: 2px;
+    margin-top: 1px;
+}
+#editContainerArea .sample-vertical .add-container-btn {
     max-width: 220px;
     margin: 12px auto 0 auto;
 }
@@ -2513,3 +2596,29 @@ html.light .icon-moon {
   z-index: 1;
   pointer-events: none; /* agar tidak mengganggu klik */
 }
+
+/* ===== SAMPLE MODE VERTICAL & WARNA ===== */
+.sample-vertical {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.sample-vertical .col-section {
+    width: 100%;
+}
+
+/* Warna untuk Berat Mentah (hijau) */
+.sample-raw {
+    border-color: var(--sample-raw) !important;
+    background: var(--sample-raw-bg) !important;
+}
+.sample-soaked {
+    border-color: var(--sample-soaked) !important;
+    background: var(--sample-soaked-bg) !important;
+}
+.sample-stirfried {
+    border-color: var(--sample-stirfried) !important;
+    background: var(--sample-stirfried-bg) !important;
+}
+
