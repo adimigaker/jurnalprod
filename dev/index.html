@@ -142,15 +142,12 @@
       <tbody>`;
     for (let row of rows) {
       const date = new Date(row.created_at).toLocaleString('id-ID');
-      
-      // Ambil device model dari kolom device_model jika ada, fallback ke parsing user agent
       let device = row.device_model || '';
       let osInfo = '';
       let browserInfo = '';
       if (row.platform) {
         osInfo = `${row.platform} ${row.platform_version || ''}`;
       }
-      // Browser dari user agent parsing
       const parsed = parseUserAgent(row.user_agent);
       if (!device) device = parsed.device;
       if (!osInfo) osInfo = parsed.os;
@@ -184,14 +181,18 @@
   async function clearAll() {
     if (!confirm('Hapus semua data akses? Tindakan ini tidak dapat dibatalkan.')) return;
     try {
-      const response = await fetch(`${SB_URL}/rest/v1/access_logs`, {
+      // Menambahkan filter WHERE id.neq.0 untuk memenuhi persyaratan WHERE clause
+      const response = await fetch(`${SB_URL}/rest/v1/access_logs?id=neq.0`, {
         method: 'DELETE',
         headers: {
           'apikey': SB_KEY,
           'Authorization': `Bearer ${SB_KEY}`
         }
       });
-      if (!response.ok) throw new Error(await response.text());
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText);
+      }
       alert('Semua data berhasil dihapus');
       loadData();
     } catch (err) {
