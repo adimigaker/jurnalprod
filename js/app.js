@@ -3228,57 +3228,91 @@ document.addEventListener("DOMContentLoaded", () => {
 // Fungsi log akses perangkat
 async function logAccess() {
     try {
+        console.log("[LOG] Memulai log akses");
         const url = `${Sync.sbUrl()}/rest/v1/access_logs`;
         const headers = {
-            'Content-Type': 'application/json',
-            'apikey': Sync.sbKey(),
-            'Authorization': `Bearer ${Sync.sbKey()}`,
-            'Prefer': 'return=minimal'
+            "Content-Type": "application/json",
+            apikey: Sync.sbKey(),
+            Authorization: `Bearer ${Sync.sbKey()}`,
+            Prefer: "return=minimal"
         };
-        const lastLog = localStorage.getItem('last_log_time');
+
+        // Throttle: hanya sekali per 10 menit
+        const lastLog = localStorage.getItem("last_log_time");
         const now = Date.now();
-        if (lastLog && (now - parseInt(lastLog)) < 600000) return;
-        localStorage.setItem('last_log_time', now);
-        
-        // Ambil IP publik
-        let ip = '';
-        try {
-            const ipRes = await fetch('https://api.ipify.org?format=json');
-            const ipData = await ipRes.json();
-            ip = ipData.ip;
-        } catch(e) {}
-        
-        // Dapatkan Client Hints (jika tersedia)
-        let platform = '', platformVersion = '', model = '';
-        if (navigator.userAgentData) {
-            const uaData = navigator.userAgentData;
-            platform = uaData.platform;
-            platformVersion = uaData.platformVersion || '';
-            // Coba dapatkan model dari high-entropy values (perlu izin? tidak, hanya untuk nilai tertentu)
-            try {
-                const highEntropy = await uaData.getHighEntropyValues(['model', 'platformVersion']);
-                model = highEntropy.model || '';
-                if (highEntropy.platformVersion) platformVersion = highEntropy.platformVersion;
-            } catch(e) {}
+        if (lastLog && now - parseInt(lastLog) < 600000) {
+            console.log("[LOG] Throttle, lewati");
+            return;
         }
-        
-        await fetch(url, {
-            method: 'POST',
+        localStorage.setItem("last_log_time", now);
+
+        // Ambil IP publik (timeout 3 detik)
+        let ip = "";
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 3000);
+            const ipRes = await fetch("https://api.ipify.org?format=json", {
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+            if (ipRes.ok) {
+                const ipData = await ipRes.json();
+                ip = ipData.ip;
+            }
+        } catch (e) {
+            console.warn("[LOG] Gagal ambil IP:", e);
+        }
+
+        // Kumpulkan data
+        let platform = "",
+            platformVersion = "",
+            model = "";
+        if (navigator.userAgentData) {
+            try {
+                const uaData = navigator.userAgentData;
+                platform = uaData.platform || "";
+                const highEntropy = await uaData.getHighEntropyValues([
+                    "model",
+                    "platformVersion"
+                ]);
+                model = highEntropy.model || "";
+                platformVersion = highEntropy.platformVersion || "";
+            } catch (e) {
+                console.warn("[LOG] Gagal ambil high-entropy values:", e);
+            }
+        }
+
+        const payload = {
+            user_agent: navigator.userAgent,
+            screen_width: screen.width,
+            screen_height: screen.height,
+            ip_address: ip,
+            platform: platform,
+            platform_version: platformVersion,
+            device_model: model
+        };
+        console.log("[LOG] Mengirim payload:", payload);
+
+        const response = await fetch(url, {
+            method: "POST",
             headers: headers,
-            body: JSON.stringify({
-                user_agent: navigator.userAgent,
-                screen_width: screen.width,
-                screen_height: screen.height,
-                ip_address: ip,
-                platform: platform,
-                platform_version: platformVersion,
-                device_model: model
-            })
+            body: JSON.stringify(payload)
         });
-    } catch(e) { console.warn('Gagal log akses', e); }
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+        console.log("[LOG] Berhasil mengirim log");
+    } catch (e) {
+        console.error("[LOG] Gagal log akses:", e);
+    }
 }
 
-// Panggil setelah DOM siap
-document.addEventListener("DOMContentLoaded", () => {
-    setTimeout(logAccess, 1000);
-});
+// Panggil logAccess setelah DOM siap, dengan delay agar tidak mengganggu render
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => {
+        setTimeout(logAccess, 1500);
+    });
+} else {
+    setTimeout(logAccess, 1500);
+}
