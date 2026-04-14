@@ -2412,323 +2412,355 @@ function makeSortable(containerEl) {
 }
 
 // ==================== KALKULATOR ====================
-const Calc = (() => {
-    let expr = "",
-        justEq = false;
-    let history = JSON.parse(localStorage.getItem("jp_calc_history") || "[]");
-    const saveHistory = () =>
-        localStorage.setItem("jp_calc_history", JSON.stringify(history));
-    const OPS = ["+", "−", "×", "÷"];
-    const fmtNum = n => {
-        if (n === null || n === undefined || !isFinite(n)) return "Error";
-        return parseFloat(n.toPrecision(12)).toString();
-    };
-    const unclosedParens = () => {
-        let n = 0;
-        for (const ch of expr) {
-            if (ch === "(") n++;
-            else if (ch === ")") n--;
+let calcExpression = "0";
+let calcResult = "";
+let calcHistory = [];
+
+// Load history dari localStorage
+try {
+    const saved = localStorage.getItem("calc_history");
+    if (saved) calcHistory = JSON.parse(saved);
+} catch (e) {
+    calcHistory = [];
+}
+
+function saveCalcHistory() {
+    localStorage.setItem("calc_history", JSON.stringify(calcHistory));
+}
+
+function evaluateExpression(expr) {
+    // Hapus simbol % jika ada (seharusnya sudah tidak ada setelah diproses)
+    let sanitized = expr.replace(/,/g, ".").replace(/%/g, "");
+    
+    if (!/^[0-9+\-*/.()\s]+$/.test(sanitized)) return "Error";
+    
+    try {
+        const result = Function(`"use strict"; return (${sanitized})`)();
+        if (typeof result === "number" && isFinite(result)) {
+            return Math.round(result * 1e6) / 1e6;
         }
-        return n;
-    };
-    function tokenize(s) {
-        const tokens = [];
-        let num = "";
-        for (let i = 0; i < s.length; i++) {
-            const ch = s[i];
-            if ("0123456789.".includes(ch)) {
-                num += ch;
-            } else {
-                if (num) {
-                    tokens.push(parseFloat(num));
-                    num = "";
-                }
-                if (OPS.includes(ch) || ch === "(" || ch === ")")
-                    tokens.push(ch);
-            }
-        }
-        if (num) tokens.push(parseFloat(num));
-        return tokens;
+        return "Error";
+    } catch (e) {
+        return "Error";
     }
-    function evaluate(s) {
-        const tokens = tokenize(s);
-        const prec = { "+": 1, "−": 1, "×": 2, "÷": 2 };
-        const out = [],
-            ops = [];
-        const applyOp = () => {
-            const op = ops.pop(),
-                b = out.pop(),
-                a = out.pop();
-            if (op === "+") out.push(a + b);
-            else if (op === "−") out.push(a - b);
-            else if (op === "×") out.push(a * b);
-            else if (op === "÷") {
-                if (b === 0) throw new Error("div0");
-                out.push(a / b);
-            }
-        };
-        for (const tok of tokens) {
-            if (typeof tok === "number") {
-                out.push(tok);
-            } else if (tok === "(") {
-                ops.push(tok);
-            } else if (tok === ")") {
-                while (ops.length && ops[ops.length - 1] !== "(") applyOp();
-                ops.pop();
-            } else if (OPS.includes(tok)) {
-                while (
-                    ops.length &&
-                    ops[ops.length - 1] !== "(" &&
-                    prec[ops[ops.length - 1]] >= prec[tok]
-                )
-                    applyOp();
-                ops.push(tok);
-            }
-        }
-        while (ops.length) applyOp();
-        return out[0] ?? null;
+}
+
+function addCalcToHistory(expr, result) {
+    if (calcHistory.length > 0) {
+        const last = calcHistory[calcHistory.length - 1];
+        if (last.expr === expr && last.result === result) return;
     }
-    function tryEval(s) {
-        if (!s) return null;
-        try {
-            const open =
-                (s.match(/\(/g) || []).length - (s.match(/\)/g) || []).length;
-            const closed = s + ")".repeat(Math.max(0, open));
-            const last = closed.trim().slice(-1);
-            if (OPS.includes(last) || last === "(") return null;
-            const res = evaluate(closed);
-            return res !== null && isFinite(res) ? fmtNum(res) : null;
-        } catch {
-            return null;
+    calcHistory.push({ expr, result: String(result) });
+    if (calcHistory.length > 30) calcHistory.shift();
+    saveCalcHistory();
+}
+
+function clearCalcHistory() {
+    calcHistory = [];
+    saveCalcHistory();
+    if (currentTab === "kalkulator") renderKalkulator();
+}
+
+function updateCalcDisplay() {
+    const exprEl = document.querySelector(".calc-expr");
+    const valEl = document.querySelector(".calc-val");
+    
+    if (exprEl) {
+        // Ganti simbol internal dengan simbol display
+        let displayExpr = calcExpression
+            .replace(/\*/g, "×")
+            .replace(/\//g, "÷");
+        exprEl.textContent = displayExpr;
+    }
+    
+    // Live preview: evaluasi ekspresi yang sedang diketik
+    if (valEl) {
+        const preview = getLivePreview(calcExpression);
+        valEl.textContent = preview;
+    }
+}
+
+// Fungsi baru untuk live preview
+function getLivePreview(expr) {
+    if (!expr || expr === "0" || expr === "Error") return "";
+    
+    // Hapus % karena sudah tidak ada di ekspresi final
+    let evalExpr = expr.replace(/,/g, ".").replace(/%/g, "");
+    
+    const lastChar = evalExpr.slice(-1);
+    if (["+", "-", "*", "/", "%"].includes(lastChar)) {
+        evalExpr = evalExpr.slice(0, -1);
+    }
+    
+    if (!evalExpr) return "";
+    
+    if (!/^[0-9+\-*/.()\s]+$/.test(evalExpr)) return "";
+    
+    try {
+        const result = Function(`"use strict"; return (${evalExpr})`)();
+        if (typeof result === "number" && isFinite(result)) {
+            let formatted = Math.round(result * 1e6) / 1e6;
+            return String(formatted).replace(/\./g, ",");
+        }
+    } catch (e) {
+        return "";
+    }
+    return "";
+}
+
+function renderKalkulator() {
+    const pg = document.getElementById("page-kalkulator");
+    if (!pg) return;
+
+    const hasHistory = calcHistory.length > 0;
+
+    pg.innerHTML = `
+        <div class="calc-scroll-area" id="calcScrollArea">
+            ${hasHistory ? `
+                <button class="calc-history-clear" id="clearHistoryBtn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    Bersihkan Riwayat
+                </button>
+            ` : ""}
+            <div class="calc-history-list" id="calcHistoryList">
+                ${calcHistory.map(item => {
+                    const displayExpr = item.expr.replace(/\*/g, "×").replace(/\//g, "÷");
+                    return `
+                        <div class="calc-history-item" data-expr="${item.expr}" data-result="${item.result}">
+                            <div class="calc-history-expr">${displayExpr}</div>
+                            <div class="calc-history-result">${item.result}</div>
+                        </div>
+                    `;
+                }).join("")}
+            </div>
+        </div>
+        <div class="calc-fixed-bottom">
+            <div class="calc-display">
+                <div class="calc-expr">${calcExpression.replace(/\*/g, "×").replace(/\//g, "÷")}</div>
+                <div class="calc-val">${calcResult}</div>
+            </div>
+            <div class="calc-grid">
+                <button class="ck ck-clear" data-action="clear">AC</button>
+                <button class="ck" data-action="smartParentheses">( )</button>
+                <button class="ck ck-op" data-action="operator" data-op="%">%</button>
+                <button class="ck ck-op" data-action="operator" data-op="÷">÷</button>
+                
+                <button class="ck" data-action="number" data-val="7">7</button>
+                <button class="ck" data-action="number" data-val="8">8</button>
+                <button class="ck" data-action="number" data-val="9">9</button>
+                <button class="ck ck-op" data-action="operator" data-op="×">×</button>
+                
+                <button class="ck" data-action="number" data-val="4">4</button>
+                <button class="ck" data-action="number" data-val="5">5</button>
+                <button class="ck" data-action="number" data-val="6">6</button>
+                <button class="ck ck-op" data-action="operator" data-op="-">−</button>
+                
+                <button class="ck" data-action="number" data-val="1">1</button>
+                <button class="ck" data-action="number" data-val="2">2</button>
+                <button class="ck" data-action="number" data-val="3">3</button>
+                <button class="ck ck-op" data-action="operator" data-op="+">+</button>
+                
+                <button class="ck" data-action="number" data-val="0">0</button>
+                <button class="ck" data-action="decimal">,</button>
+                <button class="ck" data-action="backspace">Del</button>
+                <button class="ck ck-eq" data-action="equals">=</button>
+            </div>
+        </div>
+    `;
+
+    const scrollArea = document.getElementById("calcScrollArea");
+    if (scrollArea) scrollArea.scrollTop = scrollArea.scrollHeight;
+
+    pg.removeEventListener("click", handleCalcClick);
+    pg.addEventListener("click", handleCalcClick);
+
+    if (hasHistory) {
+        const clearBtn = document.getElementById("clearHistoryBtn");
+        if (clearBtn) {
+            clearBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                clearCalcHistory();
+            });
         }
     }
-    const lastIsOp = () => expr.length > 0 && OPS.includes(expr.slice(-1));
-    const lastIsNum = () =>
-        expr.length > 0 && "0123456789.)".includes(expr.slice(-1));
-    const lastChar = () => expr.slice(-1);
-    function pressNum(n) {
-        if (justEq) {
-            expr = "";
-            justEq = false;
+}
+
+function handleCalcClick(e) {
+    const target = e.target.closest("button");
+    if (!target) return;
+    
+    const historyItem = e.target.closest(".calc-history-item");
+    if (historyItem) {
+        const expr = historyItem.dataset.expr;
+        const result = historyItem.dataset.result;
+        if (expr) {
+            calcExpression = expr;
+            calcResult = result;
+            updateCalcDisplay();
         }
-        expr += n;
+        return;
     }
-    function pressOp(o) {
-        if (justEq) justEq = false;
-        if (!expr) return;
-        if (lastIsOp()) {
-            expr = expr.slice(0, -1) + o;
-        } else if (lastChar() !== "(") {
-            expr += o;
-        }
-    }
-    function pressParen() {
-        if (justEq) {
-            expr = "";
-            justEq = false;
-        }
-        if (!expr || lastIsOp() || lastChar() === "(") {
-            expr += "(";
-        } else if (unclosedParens() > 0 && lastIsNum()) {
-            expr += ")";
+
+    const action = target.dataset.action;
+    
+    if (action === "number") {
+        const val = target.dataset.val;
+        if (calcExpression === "0" || calcExpression === "Error") {
+            calcExpression = val;
         } else {
-            expr += "(";
+            calcExpression += val;
         }
+        updateCalcDisplay();
+        return;
     }
-    function pressDot() {
-        if (justEq) {
-            expr = "";
-            justEq = false;
-        }
-        const parts = expr.split(/[+−×÷()]/);
+    
+    if (action === "decimal") {
+        const parts = calcExpression.split(/[\+\-\×\÷\%\*\/]/);
         const last = parts[parts.length - 1];
-        if (!last.includes(".")) expr += ".";
-    }
-    function pressPercent() {
-        if (justEq) {
-            expr = "";
-            justEq = false;
+        if (!last.includes(",") && !last.includes(".")) {
+            calcExpression += ",";
         }
-        if (!expr) return;
-
-        // Cari angka terakhir dan operator (jika ada)
-        let match = expr.match(/(\d+(?:[.,]\d+)?)([+\-×÷]?)$/);
-        if (!match) return;
-
-        let lastNumStr = match[1].replace(/,/g, "."); // ganti koma dengan titik
-        let lastNum = parseFloat(lastNumStr);
-        let lastOp = match[2];
-
-        if (lastOp) {
-            // Ada operator, cari angka di kiri operator
-            let opIndex = expr.lastIndexOf(lastOp);
-            let leftExpr = expr.slice(0, opIndex);
-            let leftVal = tryEval(leftExpr);
-            if (leftVal !== null && !isNaN(leftVal)) {
-                let percentVal = (leftVal * lastNum) / 100;
-                expr = leftExpr + lastOp + percentVal.toString();
-            } else {
-                // Fallback: ubah persen menjadi desimal biasa
-                expr = leftExpr + lastOp + (lastNum / 100).toString();
-            }
+        updateCalcDisplay();
+        return;
+    }
+    
+    if (action === "smartParentheses") {
+        const openCount = (calcExpression.match(/\(/g) || []).length;
+        const closeCount = (calcExpression.match(/\)/g) || []).length;
+        const lastChar = calcExpression.slice(-1);
+        
+        if (calcExpression === "0" || calcExpression === "Error") {
+            calcExpression = "(";
+        } else if (openCount > closeCount && !["+", "-", "*", "/", "%", "("].includes(lastChar)) {
+            calcExpression += ")";
         } else {
-            // Tidak ada operator, ubah angka terakhir menjadi desimal
-            expr = expr.slice(0, -match[0].length) + (lastNum / 100).toString();
+            calcExpression += "(";
         }
-        justEq = false;
+        updateCalcDisplay();
+        return;
     }
-    function pressEq() {
-        if (!expr) return;
-        const open = unclosedParens();
-        const full = expr + ")".repeat(open);
-        const hasOp = OPS.some(op => full.includes(op));
-        if (!hasOp) {
-            expr = full;
-            justEq = true;
-            return;
-        }
-        try {
-            const res = evaluate(full);
-            if (res === null || !isFinite(res)) {
-                expr = "Error";
-                justEq = true;
-                return;
-            }
-            const result = res.toString();
-            history.push({ expr: full, result });
-            if (history.length > 50) history.shift();
-            saveHistory();
-            expr = result;
-            justEq = true;
-        } catch {
-            expr = "Error";
-            justEq = true;
-        }
-    }
-    function pressDel() {
-        if (justEq) {
-            expr = "";
-            justEq = false;
-            return;
-        }
-        if (expr === "Error") {
-            expr = "";
-            return;
-        }
-        expr = expr.slice(0, -1);
-    }
-    function pressClear() {
-        expr = "";
-        justEq = false;
-    }
-    function getExprLine() {
-        if (justEq) return expr;
-        return expr || "0";
-    }
-    function getResultLine() {
-        if (justEq) return "";
-        const live = tryEval(expr);
-        return live !== null && live !== expr ? "= " + live : "";
-    }
-    function isJustEq() {
-        return justEq;
-    }
-    function clearHistory() {
-        history = [];
-        saveHistory();
-    }
-    return {
-        pressNum,
-        pressOp,
-        pressDot,
-        pressPercent,
-        pressEq,
-        pressDel,
-        pressClear,
-        pressParen,
-        getExprLine,
-        getResultLine,
-        isJustEq,
-        getCur: () => expr || "0",
-        getHistory: () => history,
-        clearHistory
-    };
-})();
-
-function renderKalkulator(animate = false) {
-    const pg = $("#page-kalkulator");
-    const hist = Calc.getHistory();
-    const total = hist.length;
-    const histHTML =
-        total === 0
-            ? ""
-            : hist
-                  .map(
-                      (h, i) => `<div class="calc-history-item" ...>
-    <span class="calc-history-expr">${h.expr} =</span>
-    <span class="calc-history-result">${fmtNum(parseFloat(h.result))}</span>
-</div>`
-                  )
-                  .join("");
-    pg.innerHTML = `<div class="calc-scroll-area" id="calcScrollArea">${Calc.getHistory().length > 0 ? `<button class="calc-history-clear" id="calcHistClear"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg> Hapus</button>` : ""}<div class="calc-history-list">${histHTML}</div></div><div class="calc-fixed-bottom"><div class="calc-display"><div class="calc-expr" id="calcExpr"></div><div class="calc-val" id="calcVal"></div></div><div class="calc-grid"><button class="ck ck-clear" data-c="AC">AC</button><button class="ck ck-op" data-c="()">(  )</button><button class="ck ck-op" data-c="%">%</button><button class="ck ck-op" data-c="÷">÷</button><button class="ck" data-c="7">7</button><button class="ck" data-c="8">8</button><button class="ck" data-c="9">9</button><button class="ck ck-op" data-c="×">×</button><button class="ck" data-c="4">4</button><button class="ck" data-c="5">5</button><button class="ck" data-c="6">6</button><button class="ck ck-op" data-c="−">−</button><button class="ck" data-c="1">1</button><button class="ck" data-c="2">2</button><button class="ck" data-c="3">3</button><button class="ck ck-op" data-c="+">+</button><button class="ck" data-c="0">0</button><button class="ck" data-c=".">.</button><button class="ck ck-op" data-c="DEL">⌫</button><button class="ck ck-eq" data-c="=">=</button></div></div>`;
-    function update() {
-        const exprEl = $("#calcExpr"),
-            valEl = $("#calcVal");
-        if (Calc.isJustEq()) {
-            exprEl.textContent = Calc.getExprLine();
-            exprEl.style.fontSize = "36px";
-            exprEl.style.fontWeight = "700";
-            exprEl.style.color = "var(--text)";
-            valEl.textContent = "";
+    
+    if (action === "operator") {
+        let op = target.dataset.op;
+        const opMap = { "÷": "/", "×": "*", "+": "+", "-": "-", "%": "%" };
+        const evalOp = opMap[op] || op;
+        const lastChar = calcExpression.slice(-1);
+        if (["+", "-", "*", "/", "%"].includes(lastChar)) {
+            calcExpression = calcExpression.slice(0, -1) + evalOp;
         } else {
-            exprEl.textContent = Calc.getExprLine();
-            exprEl.style.fontSize = "";
-            exprEl.style.fontWeight = "";
-            exprEl.style.color = "";
-            valEl.textContent = Calc.getResultLine();
+            calcExpression += evalOp;
         }
+        updateCalcDisplay();
+        return;
     }
-    update();
-    $$(".ck", pg).forEach(btn =>
-        btn.addEventListener("click", () => {
-            const c = btn.dataset.c;
-            if ("0123456789".includes(c)) Calc.pressNum(c);
-            else if (c === ".") Calc.pressDot();
-            else if (c === "%") Calc.pressPercent();
-            else if (c === "()") Calc.pressParen();
-            else if (["+", "−", "×", "÷"].includes(c)) Calc.pressOp(c);
-            else if (c === "=") {
-                Calc.pressEq();
-                renderKalkulator(true);
-                const sa = $("#calcScrollArea");
-                if (sa) sa.scrollTop = sa.scrollHeight;
-                return;
-            } else if (c === "AC") Calc.pressClear();
-            else if (c === "DEL") Calc.pressDel();
-            update();
-        })
-    );
-    $$(".calc-history-item", pg).forEach(item =>
-        item.addEventListener("click", () => {
-            const idx = parseInt(item.dataset.hidx);
-            const h = Calc.getHistory()[idx];
-            if (h) {
-                Calc.pressClear();
-                let resultStr = h.result;
-                for (let ch of resultStr) {
-                    if ("0123456789".includes(ch)) Calc.pressNum(ch);
-                    else if (ch === ".") Calc.pressDot();
+    
+    if (action === "clear") {
+        calcExpression = "0";
+        calcResult = "";
+        updateCalcDisplay();
+        return;
+    }
+    
+    if (action === "backspace") {
+        if (calcExpression.length > 1) {
+            calcExpression = calcExpression.slice(0, -1);
+        } else {
+            calcExpression = "0";
+        }
+        updateCalcDisplay();
+        return;
+    }
+    
+if (action === "percent") {
+    // Buat salinan dengan simbol internal untuk diproses
+    let internalExpr = calcExpression
+        .replace(/×/g, "*")
+        .replace(/÷/g, "/");
+    
+    // Cari angka terakhir dan operator sebelumnya (gunakan simbol internal *, /)
+    const match = internalExpr.match(/(.*?)([+\-*/%]?)(\d+\.?\d*)$/);
+    
+    if (match) {
+        let beforeOperator = match[1] || "";     // Ekspresi sebelum operator (internal)
+        const operator = match[2] || "";         // Operator sebelum angka (internal)
+        const lastNumber = match[3];             // Angka terakhir
+        
+        // Konversi angka terakhir ke persen (dibagi 100)
+        const percentValue = parseFloat(lastNumber.replace(/,/g, ".")) / 100;
+        
+        if (operator === "" || operator === "+" || operator === "-") {
+            // Jika tidak ada operator atau operator +/-, persen dihitung dari angka sebelumnya
+            if (beforeOperator) {
+                // Cari angka sebelum operator (dalam format internal)
+                const prevMatch = beforeOperator.match(/(\d+\.?\d*)$/);
+                if (prevMatch) {
+                    const prevNumber = parseFloat(prevMatch[1].replace(/,/g, "."));
+                    const calculated = prevNumber * percentValue;
+                    
+                    // Hasil dalam format internal
+                    const resultInternal = beforeOperator + operator + String(calculated).replace(/\./g, ",");
+                    
+                    // Konversi kembali ke display (ganti * dan / menjadi × dan ÷)
+                    calcExpression = resultInternal
+                        .replace(/\*/g, "×")
+                        .replace(/\//g, "÷");
+                } else {
+                    // Tidak ada angka sebelumnya, anggap 0
+                    const resultInternal = beforeOperator + operator + String(percentValue).replace(/\./g, ",");
+                    calcExpression = resultInternal
+                        .replace(/\*/g, "×")
+                        .replace(/\//g, "÷");
                 }
-                update();
+            } else {
+                // Hanya angka persen, misal "10%" -> "0,1"
+                calcExpression = String(percentValue).replace(/\./g, ",");
             }
-        })
-    );
-    const histClearBtn = $("#calcHistClear");
-    if (histClearBtn)
-        histClearBtn.addEventListener("click", () => {
-            Calc.clearHistory();
-            renderKalkulator();
-        });
+        } else if (operator === "*" || operator === "/") {
+            // Untuk perkalian/pembagian, langsung ubah ke desimal
+            const resultInternal = beforeOperator + operator + String(percentValue).replace(/\./g, ",");
+            calcExpression = resultInternal
+                .replace(/\*/g, "×")
+                .replace(/\//g, "÷");
+        }
+        
+        calcResult = "";
+    }
+    
+    updateCalcDisplay();
+    return;
+}
+    
+    if (action === "equals") {
+        const result = evaluateExpression(calcExpression);
+        if (result !== "Error") {
+            calcResult = String(result).replace(".", ",");
+            addCalcToHistory(calcExpression, calcResult);
+            const historyList = document.getElementById("calcHistoryList");
+            if (historyList) {
+                const displayExpr = calcExpression.replace(/\*/g, "×").replace(/\//g, "÷");
+                const newItem = document.createElement("div");
+                newItem.className = "calc-history-item";
+                newItem.dataset.expr = calcExpression;
+                newItem.dataset.result = calcResult;
+                newItem.innerHTML = `
+                    <div class="calc-history-expr">${displayExpr}</div>
+                    <div class="calc-history-result">${calcResult}</div>
+                `;
+                historyList.appendChild(newItem);
+                const scrollArea = document.getElementById("calcScrollArea");
+                if (scrollArea) scrollArea.scrollTop = scrollArea.scrollHeight;
+                
+                // Jika sebelumnya tidak ada history, tombol clear belum muncul. Render ulang agar tombol muncul.
+                if (calcHistory.length === 1) {
+                    renderKalkulator();
+                    return;
+                }
+            }
+        } else {
+            calcResult = "Error";
+        }
+        updateCalcDisplay();
+    }
 }
 
 // ==================== CONFIRM POPUP ====================
