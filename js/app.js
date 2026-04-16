@@ -776,6 +776,36 @@ function renderProductCard(p) {
                 ? `+${formatNumberForDisplay(diff)}`
                 : `${formatNumberForDisplay(diff)}`;
     }
+    
+    // Untuk Sample Mode: hitung berat mentah dan berat jadi (dengan label kustom)
+let sampleHeaderMain = "";
+let sampleHeaderDiff = "";
+let sampleDiffClass = "";
+if (isSample) {
+    const rawTotal = (p.containers.raw || []).reduce(
+        (s, c) => s + (c.val || 0) * (c.mult || 1),
+        0
+    );
+    const stirfriedTotal = (p.containers.stirfried || []).reduce(
+        (s, c) => s + (c.val || 0) * (c.mult || 1),
+        0
+    );
+    
+    // Tampilan collapsed: hanya angka → angka (tanpa label)
+    sampleHeaderMain = `${formatNumberForDisplay(rawTotal)} → ${formatNumberForDisplay(stirfriedTotal)}`;
+    
+    // Hitung persentase perubahan
+    if (rawTotal === 0) {
+        sampleHeaderDiff = "N/A";
+        sampleDiffClass = "";
+    } else {
+        const diffPercent = ((stirfriedTotal - rawTotal) / rawTotal) * 100;
+        const sign = diffPercent > 0 ? "+" : "";
+        sampleHeaderDiff = `${sign}${diffPercent.toFixed(1)}%`;
+        sampleDiffClass = diffPercent > 0 ? "diff-positive" : (diffPercent < 0 ? "diff-negative" : "diff-zero");
+    }
+}
+
     const meta = isSplit
         ? "Porsi Kecil + Besar"
         : isSample
@@ -809,8 +839,9 @@ function renderProductCard(p) {
             ${
                 !isSample
                     ? `<div class="riwayat-total card-header-total">${formatNumberForDisplay(headerTotal)}</div>
-            <div style="font-size:11px;font-family:var(--mono)" class="${dClass} card-header-diff">${dStr}</div>`
-                    : ""
+                       <div style="font-size:11px;font-family:var(--mono)" class="${dClass} card-header-diff">${dStr}</div>`
+                    : `<div class="riwayat-total card-header-total">${sampleHeaderMain}</div>
+                       <div style="font-size:11px;font-family:var(--mono)" class="${sampleDiffClass} card-header-diff">${sampleHeaderDiff}</div>`
             }
           </div>
           <button class="delete-product-btn" data-pid="${p.id}" title="Hapus Produk">
@@ -1893,33 +1924,47 @@ function deleteFromHistory(pid) {
 }
 
 function buildRiwayatItem(p) {
-    const total = p.split
-        ? (p.containers.besar || []).reduce(
-              (s, c) => s + (c.val || 0) * (c.mult || 1),
-              0
-          ) +
-          (p.containers.kecil || []).reduce(
-              (s, c) => s + (c.val || 0) * (c.mult || 1),
-              0
-          )
-        : (p.containers.single || []).reduce(
-              (s, c) => s + (c.val || 0) * (c.mult || 1),
-              0
-          );
-    const target = p.split
-        ? (p.targetBesar || 0) + (p.targetKecil || 0)
-        : p.targetSingle || 0;
-    const diff = total - target;
-    const dClass =
-        diff > 0 ? "diff-positive" : diff < 0 ? "diff-negative" : "diff-zero";
-    const meta = p.split
-        ? "Porsi Kecil + Besar"
-        : p.sample
-          ? "Sampel"
-          : "Single";
-    const targetText = !p.sample
-        ? `· Target ${formatNumberForDisplay(target)}`
-        : "";
+    let total, target, diff, dClass;
+    let sampleMain = "", sampleDiff = "", sampleDiffClass = "";
+    
+    if (p.sample) {
+        // Sample Mode: hitung raw → stirfried
+        const rawTotal = (p.containers.raw || []).reduce(
+            (s, c) => s + (c.val || 0) * (c.mult || 1),
+            0
+        );
+        const stirfriedTotal = (p.containers.stirfried || []).reduce(
+            (s, c) => s + (c.val || 0) * (c.mult || 1),
+            0
+        );
+        
+        sampleMain = `${formatNumberForDisplay(rawTotal)} → ${formatNumberForDisplay(stirfriedTotal)}`;
+        
+        if (rawTotal === 0) {
+            sampleDiff = "N/A";
+            sampleDiffClass = "";
+        } else {
+            const diffPercent = ((stirfriedTotal - rawTotal) / rawTotal) * 100;
+            const sign = diffPercent > 0 ? "+" : "";
+            sampleDiff = `${sign}${diffPercent.toFixed(1)}%`;
+            sampleDiffClass = diffPercent > 0 ? "diff-positive" : (diffPercent < 0 ? "diff-negative" : "diff-zero");
+        }
+    } else {
+        // Single / Split Mode
+        total = p.split
+            ? (p.containers.besar || []).reduce((s, c) => s + (c.val || 0) * (c.mult || 1), 0) +
+              (p.containers.kecil || []).reduce((s, c) => s + (c.val || 0) * (c.mult || 1), 0)
+            : (p.containers.single || []).reduce((s, c) => s + (c.val || 0) * (c.mult || 1), 0);
+        target = p.split
+            ? (p.targetBesar || 0) + (p.targetKecil || 0)
+            : p.targetSingle || 0;
+        diff = total - target;
+        dClass = diff > 0 ? "diff-positive" : diff < 0 ? "diff-negative" : "diff-zero";
+    }
+    
+    const meta = p.split ? "Porsi Kecil + Besar" : p.sample ? "Sampel" : "Single";
+    const targetText = !p.sample ? `· Target ${formatNumberForDisplay(target)}` : "";
+    
     return `<div class="riwayat-item" data-rid="${p.id}">
     <div class="drag-handle" title="Seret untuk mengurutkan"><span></span><span></span><span></span></div>
     <div class="riwayat-item-header" style="padding-left:26px">
@@ -1930,10 +1975,11 @@ function buildRiwayatItem(p) {
       <div style="display:flex;align-items:center;gap:6px">
         <div style="text-align:right">
           ${
-              !p.sample
-                  ? `<div class="riwayat-total">${formatNumberForDisplay(total)}</div>
-          <div style="font-size:11px;font-family:var(--mono)" class="${dClass}">${diff >= 0 ? "+" + formatNumberForDisplay(diff) : formatNumberForDisplay(diff)}</div>`
-                  : ""
+              p.sample
+                  ? `<div class="riwayat-total">${sampleMain}</div>
+                     <div style="font-size:11px;font-family:var(--mono)" class="${sampleDiffClass}">${sampleDiff}</div>`
+                  : `<div class="riwayat-total">${formatNumberForDisplay(total)}</div>
+                     <div style="font-size:11px;font-family:var(--mono)" class="${dClass}">${diff >= 0 ? "+" + formatNumberForDisplay(diff) : formatNumberForDisplay(diff)}</div>`
           }
         </div>
         <div class="riwayat-chevron">
