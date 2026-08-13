@@ -2597,6 +2597,7 @@ function makeSortable(containerEl) {
 // ==================== KALKULATOR ====================
 let calcExpression = "0";
 let calcResult = "";
+let calcExpressionFresh = false;
 let calcHistory = [];
 
 // Load history dari localStorage
@@ -2778,6 +2779,7 @@ function handleCalcClick(e) {
         if (expr) {
             calcExpression = expr;
             calcResult = result;
+            calcExpressionFresh = false;
             updateCalcDisplay();
         }
         return;
@@ -2787,7 +2789,10 @@ function handleCalcClick(e) {
     
     if (action === "number") {
         const val = target.dataset.val;
-        if (calcExpression === "0" || calcExpression === "Error") {
+        if (calcExpressionFresh) {
+            calcExpression = val;
+            calcExpressionFresh = false;
+        } else if (calcExpression === "0" || calcExpression === "Error") {
             calcExpression = val;
         } else {
             const lastChar = calcExpression.slice(-1);
@@ -2804,6 +2809,10 @@ function handleCalcClick(e) {
     }
     
     if (action === "decimal") {
+        if (calcExpressionFresh) {
+            calcExpression = "0,";
+            calcExpressionFresh = false;
+        }
         const parts = calcExpression.split(/[\+\-\×\÷\%\*\/]/);
         const last = parts[parts.length - 1];
         if (!last.includes(",") && !last.includes(".")) {
@@ -2814,6 +2823,10 @@ function handleCalcClick(e) {
     }
     
     if (action === "smartParentheses") {
+        if (calcExpressionFresh) {
+            calcExpression = "(";
+            calcExpressionFresh = false;
+        }
         const openCount = (calcExpression.match(/\(/g) || []).length;
         const closeCount = (calcExpression.match(/\)/g) || []).length;
         const lastChar = calcExpression.slice(-1);
@@ -2830,6 +2843,7 @@ function handleCalcClick(e) {
     }
     
     if (action === "operator") {
+        calcExpressionFresh = false;
         let op = target.dataset.op;
         const opMap = { "÷": "/", "×": "*", "+": "+", "-": "-", "%": "%" };
         const evalOp = opMap[op] || op;
@@ -2846,12 +2860,16 @@ function handleCalcClick(e) {
     if (action === "clear") {
         calcExpression = "0";
         calcResult = "";
+        calcExpressionFresh = false;
         updateCalcDisplay();
         return;
     }
     
     if (action === "backspace") {
-        if (calcExpression.length > 1) {
+        if (calcExpressionFresh) {
+            calcExpression = "0";
+            calcExpressionFresh = false;
+        } else if (calcExpression.length > 1) {
             calcExpression = calcExpression.slice(0, -1);
         } else {
             calcExpression = "0";
@@ -2861,6 +2879,7 @@ function handleCalcClick(e) {
     }
     
 if (action === "percent") {
+    calcExpressionFresh = false;
     // 1. Konversi display ke internal (titik sebagai desimal, * dan / sebagai operator)
     let internalExpr = calcExpression
         .replace(/×/g, "*")
@@ -2911,8 +2930,8 @@ if (action === "percent") {
                 calcExpression = beforeOperator + operator + percentDecimal;
             }
         } else {
-            // ⬅️ SIMPAN DENGAN TITIK (format internal)
-            calcExpression = String(percentDecimal);
+            // % angka tunggal/pertama di konteks: simpan prefix, jangan timpa ekspresi
+            calcExpression = beforeNumber + percentDecimal;
         }
         
         // Hapus sisa karakter %
@@ -2928,8 +2947,9 @@ if (action === "percent") {
         const result = evaluateExpression(calcExpression);
         if (result !== "Error") {
             calcResult = String(result).replace(".", ",");
-            addCalcToHistory(calcExpression, calcResult);
+            if (!calcExpressionFresh) addCalcToHistory(calcExpression, calcResult);
             calcExpression = String(result);
+            calcExpressionFresh = true;
             const historyList = document.getElementById("calcHistoryList");
             if (historyList) {
                 const displayExpr = calcResult;
