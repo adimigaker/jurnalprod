@@ -273,7 +273,7 @@ const DB = {
 };
 
 // ==================== STATE ====================
-let currentTab = "beranda";
+let currentTab = "hitungan";
 let calYear = new Date().getFullYear();
 let calMonth = new Date().getMonth();
 let riwayatFilter = "7d";
@@ -284,7 +284,7 @@ let expandedRiwayatIds = new Set();
 
 // Scroll positions
 const scrollPositions = {
-    beranda: 0,
+    hitungan: 0,
     riwayat: 0,
     kalender: 0,
     kalkulator: 0
@@ -340,7 +340,7 @@ async function refreshApp() {
     saveScrollPosition(currentTab);
     try {
         await Sync.pull();
-        if (currentTab === "beranda") renderBeranda();
+        if (currentTab === "hitungan") renderHitungan();
         if (currentTab === "riwayat") renderRiwayat();
         if (currentTab === "kalender") renderKalender();
         if (currentTab === "kalkulator") renderKalkulator();
@@ -468,10 +468,10 @@ function setTab(tab) {
     );
     $$(".page").forEach(el => el.classList.remove("active"));
     $(`#page-${tab}`).classList.add("active");
-    const tabs = ["beranda", "riwayat", "kalkulator"];
+    const tabs = ["hitungan", "riwayat", "kalkulator"];
     const idx = tabs.indexOf(tab);
     if (idx >= 0) $("#navIndicator").style.left = idx * 33.333 + "%";
-    if (tab === "beranda") renderBeranda();
+    if (tab === "hitungan") renderHitungan();
     if (tab === "riwayat") renderRiwayat();
     if (tab === "kalender") renderKalender();
     if (tab === "kalkulator") renderKalkulator();
@@ -482,7 +482,7 @@ $$(".nav-item").forEach(el => {
     el.addEventListener("click", () => setTab(el.dataset.tab));
 });
 
-let prevTab = "beranda";
+let prevTab = "hitungan";
 $("#calBtn").addEventListener("click", () => {
     if (currentTab === "kalender") setTab(prevTab);
     else {
@@ -491,9 +491,9 @@ $("#calBtn").addEventListener("click", () => {
     }
 });
 
-// ==================== BERANDA ====================
-function renderBeranda() {
-    const pg = $("#page-beranda");
+// ==================== HITUNGAN ====================
+function renderHitungan() {
+    const pg = $("#page-hitungan");
     const allProducts = DB.get();
     const todayStr = today();
     const futureProducts = allProducts.filter(p => p.date >= todayStr);
@@ -1275,7 +1275,7 @@ $$(".edit-target-btn", ctx).forEach(btn => {
             Confirm.show(btn, () => {
                 openCards.delete(pid);
                 DB.deleteProduct(pid);
-                renderBeranda();
+                renderHitungan();
             });
         });
     });
@@ -1287,7 +1287,7 @@ $$(".edit-target-btn", ctx).forEach(btn => {
             Confirm.show(btn, () => {
                 openCards.delete(pid);
                 DB.deleteProduct(pid);
-                renderBeranda();
+                renderHitungan();
             });
         });
     });
@@ -1298,12 +1298,12 @@ $$(".edit-target-btn", ctx).forEach(btn => {
 function rerenderCard(pid, data) {
     const card = document.querySelector(`.product-card[data-pid="${pid}"]`);
     if (!card) {
-        renderBeranda();
+        renderHitungan();
         return;
     }
     const p = (data || DB.get()).find(x => x.id === pid);
     if (!p) {
-        renderBeranda();
+        renderHitungan();
         return;
     }
     const tmp = document.createElement("div");
@@ -1534,7 +1534,7 @@ $("#btnOk").addEventListener("click", () => {
     // Simpan produk
     DB.addProduct(product);
     closeModal();
-    renderBeranda();
+    renderHitungan();
 });
 
 // ==================== EDIT MODAL ====================
@@ -1914,7 +1914,7 @@ $("#btnEditSimpan").addEventListener("click", () => {
     $("#editModalOverlay").classList.remove("open");
     if (currentTab === "riwayat") renderRiwayat();
     if (currentTab === "kalender") renderKalender();
-    if (currentTab === "beranda") renderBeranda();
+    if (currentTab === "hitungan") renderHitungan();
 });
 
 function deleteFromHistory(pid) {
@@ -3220,7 +3220,7 @@ async function periodicSync() {
         const changed = await Sync.pull();
         if (changed) {
             saveScrollPosition(currentTab);
-            if (currentTab === "beranda") renderBeranda();
+            if (currentTab === "hitungan") renderHitungan();
             if (currentTab === "riwayat") renderRiwayat();
             if (currentTab === "kalender") renderKalender();
             if (currentTab === "kalkulator") renderKalkulator();
@@ -3466,7 +3466,7 @@ if (document.readyState === "loading") {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-    setTab("beranda");
+    setTab("hitungan");
     startPeriodicSync();
     attachAutoHideListener();
 });
