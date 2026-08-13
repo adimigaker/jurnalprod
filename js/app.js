@@ -688,13 +688,13 @@ function renderProductCard(p) {
                     return `<div class="tim-row">
                 <div class="tim-label">${labels[k]}</div>
                 <div class="tim-field">
-                    <input class="container-input tim-berat-input" type="text" value="${fmtBerat(c.berat)}"
+                    <input class="container-input tim-berat-input" type="text" value="${c.berat > 0 ? fmtBerat(c.berat) : ""}"
                         data-pid="${p.id}" data-col="${k}" placeholder="0" inputmode="decimal" />
                     <span class="tim-unit">kg</span>
                 </div>
                 <div class="tim-field tim-field-porsi">
-                    <input class="container-input tim-porsi-input" type="text" value="${fmtPorsi(c.porsi)}"
-                        data-pid="${p.id}" data-col="${k}" placeholder="–" inputmode="numeric" />
+                    <input class="container-input tim-porsi-input" type="text" value="${c.porsi > 0 ? fmtPorsi(c.porsi) : ""}"
+                        data-pid="${p.id}" data-col="${k}" placeholder="" inputmode="numeric" />
                     <span class="tim-unit">porsi</span>
                 </div>
             </div>`;
@@ -1020,9 +1020,10 @@ function attachCardEvents(ctx) {
             const p = data.find(x => x.id === pid);
             if (!p) return;
             if (!p.containers[col]) p.containers[col] = {};
-            p.containers[col].berat = parseNumberFromInput(input.value);
+            const v = parseNumberFromInput(input.value);
+            p.containers[col].berat = v;
             saveAndSync(pid, data);
-            input.value = fmtBerat(p.containers[col].berat);
+            input.value = v > 0 ? fmtBerat(v) : "";
             refreshSummary(pid);
         };
         input.addEventListener("change", commit);
@@ -1036,9 +1037,11 @@ function attachCardEvents(ctx) {
             const p = data.find(x => x.id === pid);
             if (!p) return;
             if (!p.containers[col]) p.containers[col] = {};
-            p.containers[col].porsi = parsePorsi(input.value);
+            const v = parsePorsi(input.value);
+            p.containers[col].porsi = v;
             saveAndSync(pid, data);
-            input.value = fmtPorsi(p.containers[col].porsi);
+            input.value = v > 0 ? fmtPorsi(v) : "";
+            refreshSummary(pid);
         };
         input.addEventListener("change", commit);
         input.addEventListener("blur", commit);
@@ -1509,13 +1512,13 @@ function renderEditTimCol() {
             return `<div class="tim-row">
                 <div class="tim-label">${LaporanCore.TIM_LABELS[k]}</div>
                 <div class="tim-field">
-                    <input class="container-input edit-val-input edit-tim-berat" type="text" value="${fmtBerat(c.berat)}"
+                    <input class="container-input edit-val-input edit-tim-berat" type="text" value="${c.berat > 0 ? fmtBerat(c.berat) : ""}"
                         data-col="${k}" placeholder="0" inputmode="decimal" />
                     <span class="tim-unit">kg</span>
                 </div>
                 <div class="tim-field tim-field-porsi">
-                    <input class="container-input edit-val-input edit-tim-porsi" type="text" value="${fmtPorsi(c.porsi)}"
-                        data-col="${k}" placeholder="–" inputmode="numeric" />
+                    <input class="container-input edit-val-input edit-tim-porsi" type="text" value="${c.porsi > 0 ? fmtPorsi(c.porsi) : ""}"
+                        data-col="${k}" placeholder="" inputmode="numeric" />
                     <span class="tim-unit">porsi</span>
                 </div>
             </div>`;
@@ -1575,16 +1578,18 @@ function attachEditContainerEvents(ctx) {
         inp.addEventListener("input", () => {
             const col = inp.dataset.col;
             if (!editState.containers[col]) editState.containers[col] = {};
-            editState.containers[col].berat = parseNumberFromInput(inp.value);
-            inp.value = fmtBerat(editState.containers[col].berat);
+            const v = parseNumberFromInput(inp.value);
+            editState.containers[col].berat = v;
+            inp.value = v > 0 ? fmtBerat(v) : "";
         });
     });
     $$(".edit-tim-porsi", ctx).forEach(inp => {
         inp.addEventListener("input", () => {
             const col = inp.dataset.col;
             if (!editState.containers[col]) editState.containers[col] = {};
-            editState.containers[col].porsi = parsePorsi(inp.value);
-            inp.value = fmtPorsi(editState.containers[col].porsi);
+            const v = parsePorsi(inp.value);
+            editState.containers[col].porsi = v;
+            inp.value = v > 0 ? fmtPorsi(v) : "";
         });
     });
     $$(".edit-mult-input", ctx).forEach(inp => {
@@ -1698,7 +1703,7 @@ function attachEditContainerEvents(ctx) {
                 const col = inp.dataset.col;
                 Numpad.show(inp, val => {
                     inp.removeAttribute("readonly");
-                    inp.value = fmtBerat(val);
+                    inp.value = val > 0 ? fmtBerat(val) : "";
                     inp.setAttribute("readonly", "readonly");
                     if (!editState.containers[col]) editState.containers[col] = {};
                     editState.containers[col].berat = val;
@@ -1723,7 +1728,7 @@ function attachEditContainerEvents(ctx) {
                 const col = inp.dataset.col;
                 Numpad.show(inp, val => {
                     inp.removeAttribute("readonly");
-                    inp.value = fmtPorsi(val);
+                    inp.value = val > 0 ? fmtPorsi(val) : "";
                     inp.setAttribute("readonly", "readonly");
                     if (!editState.containers[col]) editState.containers[col] = {};
                     editState.containers[col].porsi = val;
@@ -2946,13 +2951,25 @@ function attachNumpad(ctx) {
         const pid = input.dataset.pid,
             col = input.dataset.col,
             cidx = parseInt(input.dataset.cidx);
+        const isTimBerat = input.classList.contains("tim-berat-input");
+        const isTimPorsi = input.classList.contains("tim-porsi-input");
         bindNumpad(input, val => {
             input.removeAttribute("readonly");
-            input.value = formatNumberForDisplay(val);
+            if (isTimBerat) input.value = val > 0 ? fmtBerat(val) : "";
+            else if (isTimPorsi) input.value = val > 0 ? fmtPorsi(val) : "";
+            else input.value = formatNumberForDisplay(val);
             input.setAttribute("readonly", "readonly");
             const data = DB.get();
             const p = data.find(x => x.id === pid);
             if (!p) return;
+            if (isTimBerat || isTimPorsi) {
+                if (!p.containers[col]) p.containers[col] = {};
+                if (isTimBerat) p.containers[col].berat = val;
+                else p.containers[col].porsi = val;
+                saveAndSync(pid, data);
+                refreshSummary(pid);
+                return;
+            }
             p.containers[col][cidx].val = val;
             saveAndSync(pid, data);
             updateResult(pid, col, cidx, p.containers[col][cidx]);

@@ -18,8 +18,9 @@ function berandaCard(date, badge) {
         if (p.sample) {
             const lines = LaporanCore.TIM_KEYS.map(k => {
                 const c = p.containers[k] || {};
+                const berat = c.berat > 0 ? fmtBerat(c.berat) : "–";
                 const porsi = c.porsi ? fmtPorsi(c.porsi) + " porsi" : "";
-                return `<div class="bd-tim-line">${LaporanCore.TIM_LABELS[k]} <b>${fmtBerat(c.berat)} kg</b>${porsi ? ` · ${porsi}` : ""}</div>`;
+                return `<div class="bd-tim-line">${LaporanCore.TIM_LABELS[k]} <b>${berat} kg</b>${porsi ? ` · ${porsi}` : ""}</div>`;
             }).join("");
             return `
                 <div class="bd-row">
