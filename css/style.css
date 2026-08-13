@@ -190,7 +190,7 @@ body {
 }
 .calc-fixed-bottom {
     flex-shrink: 0;
-    padding: 8px 16px 68px;
+    padding: 8px 16px 0;
     background: var(--bg);
     border-top: 1px solid var(--border);
 }
@@ -2519,7 +2519,7 @@ html.light .icon-moon {
 /* Untuk page kalkulator yang punya layout sendiri, sesuaikan */
 #page-kalkulator {
     padding-top: 70px;
-    padding-bottom: 80px;
+    padding-bottom: 64px;
 }
 
 /* ===== GROUPING BERANDA PER HARI ===== */
