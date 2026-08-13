@@ -15,40 +15,42 @@ function berandaCard(date, badge) {
         totalTarget > 0 ? (totalProduksi >= totalTarget ? "ok" : "kurang") : "none";
 
     const rows = items.map(p => {
+        if (p.sample) {
+            const lines = LaporanCore.TIM_KEYS.map(k => {
+                const c = p.containers[k] || {};
+                const porsi = c.porsi ? fmtPorsi(c.porsi) + " porsi" : "";
+                return `<div class="bd-tim-line">${LaporanCore.TIM_LABELS[k]} <b>${fmtBerat(c.berat)} kg</b>${porsi ? ` · ${porsi}` : ""}</div>`;
+            }).join("");
+            return `
+                <div class="bd-row">
+                    <div class="bd-row-head">
+                        <span class="bd-name">${esc(p.name)}</span>
+                        <span class="bd-unit">${esc(p.unit || "kg")}</span>
+                        <button class="bd-edit" data-bd-edit="${p.id}" title="Edit">✎</button>
+                        <button class="bd-del" data-bd-del="${p.id}" title="Hapus">×</button>
+                    </div>
+                    <div class="bd-tim-list">${lines}</div>
+                </div>`;
+        }
         const cols = LaporanCore.colKeys(p);
         const labels = LaporanCore.colLabels(p);
         const colHtml = cols
             .map(c => {
-                if (p.sample) {
-                    const cobj = p.containers[c] || {};
-                    return `
-                <div class="bd-col">
-                    <div class="bd-col-label">${labels[c]}</div>
-                    <div class="bd-tim-line">
-                        <input class="bd-input bd-tim-berat" inputmode="decimal" data-pid="${p.id}" data-col="${c}"
-                            value="${fmtBerat(cobj.berat)}" />
-                        <input class="bd-input bd-tim-porsi" inputmode="numeric" data-pid="${p.id}" data-col="${c}"
-                            value="${fmtPorsi(cobj.porsi)}" />
-                    </div>
-                </div>`;
-                }
                 const total = LaporanCore.colTotal(p, c);
                 const target = LaporanCore.colTarget(p, c);
-                const tgtLine = `<div class="bd-col-target">target ${formatNumberForDisplay(target)}</div>`;
                 return `
                 <div class="bd-col">
                     <div class="bd-col-label">${labels[c]}</div>
-                    <input class="bd-input" inputmode="decimal" data-pid="${p.id}" data-col="${c}"
-                        value="${formatNumberForDisplay(total)}" />
-                    ${tgtLine}
+                    <div class="bd-val">${formatNumberForDisplay(total)}${target > 0 ? ` <span class="bd-val-target">/ ${formatNumberForDisplay(target)}</span>` : ""}</div>
                 </div>`;
             })
             .join("");
         return `
             <div class="bd-row">
                 <div class="bd-row-head">
-                    <span class="bd-name" data-bd-edit="${p.id}">${esc(p.name)}</span>
+                    <span class="bd-name">${esc(p.name)}</span>
                     <span class="bd-unit">${esc(p.unit || "pcs")}</span>
+                    <button class="bd-edit" data-bd-edit="${p.id}" title="Edit">✎</button>
                     <button class="bd-del" data-bd-del="${p.id}" title="Hapus">×</button>
                 </div>
                 <div class="bd-cols">${colHtml}</div>
@@ -126,26 +128,5 @@ function renderBeranda() {
         }
         const edit = e.target.closest("[data-bd-edit]");
         if (edit) openEditModal(edit.dataset.bdEdit);
-    });
-
-    pg.addEventListener("change", e => {
-        const inp = e.target.closest(".bd-input");
-        if (!inp) return;
-        const pid = inp.dataset.pid;
-        const col = inp.dataset.col;
-        const data = DB.get();
-        const p = data.find(x => x.id === pid);
-        if (!p) return;
-        if (!p.containers[col]) p.containers[col] = {};
-        if (inp.classList.contains("bd-tim-berat")) {
-            p.containers[col].berat = parseNumberFromInput(inp.value);
-        } else if (inp.classList.contains("bd-tim-porsi")) {
-            p.containers[col].porsi = parsePorsi(inp.value);
-        } else {
-            p.containers = { ...p.containers, [col]: [{ val: parseNumberFromInput(inp.value), mult: 1 }] };
-        }
-        saveAndSync(pid, data);
-        renderBeranda();
-        if (currentTab === "hitungan") renderHitungan();
     });
 }

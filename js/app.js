@@ -692,7 +692,7 @@ function renderProductCard(p) {
                         data-pid="${p.id}" data-col="${k}" placeholder="0" inputmode="decimal" />
                     <span class="tim-unit">kg</span>
                 </div>
-                <div class="tim-field">
+                <div class="tim-field tim-field-porsi">
                     <input class="container-input tim-porsi-input" type="text" value="${fmtPorsi(c.porsi)}"
                         data-pid="${p.id}" data-col="${k}" placeholder="–" inputmode="numeric" />
                     <span class="tim-unit">porsi</span>
@@ -1513,7 +1513,7 @@ function renderEditTimCol() {
                         data-col="${k}" placeholder="0" inputmode="decimal" />
                     <span class="tim-unit">kg</span>
                 </div>
-                <div class="tim-field">
+                <div class="tim-field tim-field-porsi">
                     <input class="container-input edit-val-input edit-tim-porsi" type="text" value="${fmtPorsi(c.porsi)}"
                         data-col="${k}" placeholder="–" inputmode="numeric" />
                     <span class="tim-unit">porsi</span>

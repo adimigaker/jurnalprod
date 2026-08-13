@@ -1948,39 +1948,45 @@ html.light .icon-moon {
 .tim-vertical {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 6px;
     width: 100%;
 }
 .tim-row {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 6px;
 }
 .tim-label {
-    flex: 1;
-    font-size: 13px;
+    width: 44px;
+    flex: none;
+    font-size: 11px;
     color: var(--text-muted);
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 .tim-field {
     display: flex;
-    align-items: center;
-    gap: 6px;
+    align-items: baseline;
+    gap: 3px;
 }
 .tim-field .container-input {
-    width: min(150px, 32vw);
-    height: clamp(40px, 10vw, 48px);
-    font-size: clamp(16px, 4.5vw, 20px);
-    padding: 8px;
+    width: 72px;
+    height: 34px;
+    font-size: 15px;
+    padding: 4px 6px;
     text-align: right;
 }
+.tim-field-porsi .container-input {
+    width: 52px;
+}
 .tim-unit {
-    font-size: 12px;
+    font-size: 9px;
     color: var(--text-muted);
-    min-width: 32px;
+    white-space: nowrap;
 }
 #editContainerArea .tim-vertical .container-input {
-    font-size: clamp(16px, 4.5vw, 20px);
+    font-size: 15px;
 }
 
 /* Split mode — lebih kompak karena 2 kolom */
@@ -2648,8 +2654,6 @@ html.light .icon-moon {
     font-weight: 600;
     font-size: 14px;
     flex: 1;
-    cursor: pointer;
-    color: var(--accent-text);
 }
 .bd-unit {
     font-size: 11px;
@@ -2678,34 +2682,42 @@ html.light .icon-moon {
     color: var(--text-muted);
     margin-bottom: 4px;
 }
-.bd-input {
-    width: 100%;
-    padding: 11px 13px;
-    font-size: 15px;
-    font-weight: 600;
-    text-align: center;
-    background: var(--bg-input);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    color: var(--text);
-    font-family: var(--sans);
-}
-.bd-input:focus {
-    border-color: var(--border-focus);
-    outline: none;
-}
-.bd-col-target {
-    font-size: 10px;
-    color: var(--text-muted);
-    text-align: center;
-    margin-top: 4px;
+.bd-tim-list {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
 }
 .bd-tim-line {
-    display: flex;
-    gap: 6px;
-    align-items: center;
+    font-size: 12.5px;
+    line-height: 1.35;
 }
-.bd-tim-line .bd-tim-porsi { width: 70px; }
+.bd-tim-line b {
+    font-family: var(--mono);
+    font-weight: 600;
+}
+.bd-val {
+    font-size: 15px;
+    font-weight: 700;
+    font-family: var(--mono);
+    text-align: center;
+}
+.bd-val-target {
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--text-muted);
+}
+.bd-edit {
+    width: 26px;
+    height: 26px;
+    border: none;
+    border-radius: 8px;
+    background: var(--accent-soft);
+    color: var(--accent-text);
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+}
+.bd-edit:active { background: var(--bg-card); }
 .bd-add {
     width: 100%;
     margin-top: 12px;
