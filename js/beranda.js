@@ -19,11 +19,22 @@ function berandaCard(date, badge) {
         const labels = LaporanCore.colLabels(p);
         const colHtml = cols
             .map(c => {
+                if (p.sample) {
+                    const cobj = p.containers[c] || {};
+                    return `
+                <div class="bd-col">
+                    <div class="bd-col-label">${labels[c]}</div>
+                    <div class="bd-tim-line">
+                        <input class="bd-input bd-tim-berat" inputmode="decimal" data-pid="${p.id}" data-col="${c}"
+                            value="${fmtBerat(cobj.berat)}" />
+                        <input class="bd-input bd-tim-porsi" inputmode="numeric" data-pid="${p.id}" data-col="${c}"
+                            value="${fmtPorsi(cobj.porsi)}" />
+                    </div>
+                </div>`;
+                }
                 const total = LaporanCore.colTotal(p, c);
                 const target = LaporanCore.colTarget(p, c);
-                const tgtLine = p.sample
-                    ? ""
-                    : `<div class="bd-col-target">target ${formatNumberForDisplay(target)}</div>`;
+                const tgtLine = `<div class="bd-col-target">target ${formatNumberForDisplay(target)}</div>`;
                 return `
                 <div class="bd-col">
                     <div class="bd-col-label">${labels[c]}</div>
@@ -125,8 +136,14 @@ function renderBeranda() {
         const data = DB.get();
         const p = data.find(x => x.id === pid);
         if (!p) return;
-        const val = parseNumberFromInput(inp.value);
-        p.containers = { ...p.containers, [col]: [{ val, mult: 1 }] };
+        if (!p.containers[col]) p.containers[col] = {};
+        if (inp.classList.contains("bd-tim-berat")) {
+            p.containers[col].berat = parseNumberFromInput(inp.value);
+        } else if (inp.classList.contains("bd-tim-porsi")) {
+            p.containers[col].porsi = parsePorsi(inp.value);
+        } else {
+            p.containers = { ...p.containers, [col]: [{ val: parseNumberFromInput(inp.value), mult: 1 }] };
+        }
         saveAndSync(pid, data);
         renderBeranda();
         if (currentTab === "hitungan") renderHitungan();

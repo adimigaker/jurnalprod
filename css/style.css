@@ -49,12 +49,6 @@ html.dark {
     --col-kecil-bg: #2d1517;
     --col-besar: #388bfd;
     --col-besar-bg: #1c2d44;
-    --sample-raw: #3fb950;
-    --sample-raw-bg: rgba(63, 185, 80, 0.08);
-    --sample-soaked: #d29922;
-    --sample-soaked-bg: rgba(210, 153, 34, 0.08);
-    --sample-stirfried: #388bfd;
-    --sample-stirfried-bg: rgba(56, 139, 253, 0.08);
 }
 
 html.light {
@@ -84,12 +78,6 @@ html.light {
     --col-kecil-bg: #fff0ee;
     --col-besar: #0969da;
     --col-besar-bg: #ddf4ff;
-    --sample-raw: #1a7f37;
-    --sample-raw-bg: #dafbe1;
-    --sample-soaked: #9a6700;
-    --sample-soaked-bg: #fff8c5;
-    --sample-stirfried: #0969da;
-    --sample-stirfried-bg: #ddf4ff;
 }
 
 @media (prefers-color-scheme: light) {
@@ -1956,71 +1944,43 @@ html.light .icon-moon {
     margin: 12px auto 0 auto;
 }
 
-/* ===== SAMPLE MODE (vertical) - menggunakan ukuran yang sama dengan single mode ===== */
-/* Beranda: sample vertical */
-#page-hitungan .sample-vertical .container-input {
-    font-size: clamp(22px, 6vw, 28px);
-    padding: 10px;
-    height: var(--input-size-single);
-    max-width: min(200px, 50vw);
+/* ===== TIMBANGAN MODE ===== */
+.tim-vertical {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
 }
-#page-hitungan .sample-vertical .mult-step-btn {
-    width: var(--stepper-size-single);
-    height: var(--stepper-size-single);
-    font-size: clamp(18px, 5vw, 24px);
+.tim-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
-#page-hitungan .sample-vertical .mult-step-input {
-    width: var(--stepper-size-single);
-    height: var(--stepper-size-single);
-    font-size: clamp(13px, 4vw, 16px);
+.tim-label {
+    flex: 1;
+    font-size: 13px;
+    color: var(--text-muted);
+    white-space: nowrap;
 }
-#page-hitungan .sample-vertical .mult-result {
-    font-size: clamp(17px, 5vw, 22px);
+.tim-field {
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
-#page-hitungan .sample-vertical .container-row-top,
-#page-hitungan .sample-vertical .container-row-bottom {
-    justify-content: center;
+.tim-field .container-input {
+    width: min(150px, 32vw);
+    height: clamp(40px, 10vw, 48px);
+    font-size: clamp(16px, 4.5vw, 20px);
+    padding: 8px;
+    text-align: right;
 }
-#page-hitungan .sample-vertical .container-row-result {
-    padding-top: 2px;
-    margin-top: 1px;
+.tim-unit {
+    font-size: 12px;
+    color: var(--text-muted);
+    min-width: 32px;
 }
-#page-hitungan .sample-vertical .add-container-btn {
-    max-width: 220px;
-    margin: 12px auto 0 auto;
-}
-
-/* Edit modal: sample vertical */
-#editContainerArea .sample-vertical .container-input {
-    font-size: clamp(22px, 6vw, 28px);
-    padding: 10px;
-    height: var(--input-size-single);
-    max-width: min(200px, 50vw);
-}
-#editContainerArea .sample-vertical .mult-step-btn {
-    width: var(--stepper-size-single);
-    height: var(--stepper-size-single);
-    font-size: clamp(18px, 5vw, 24px);
-}
-#editContainerArea .sample-vertical .mult-step-input {
-    width: var(--stepper-size-single);
-    height: var(--stepper-size-single);
-    font-size: clamp(13px, 4vw, 16px);
-}
-#editContainerArea .sample-vertical .mult-result {
-    font-size: clamp(17px, 5vw, 22px);
-}
-#editContainerArea .sample-vertical .container-row-top,
-#editContainerArea .sample-vertical .container-row-bottom {
-    justify-content: center;
-}
-#editContainerArea .sample-vertical .container-row-result {
-    padding-top: 2px;
-    margin-top: 1px;
-}
-#editContainerArea .sample-vertical .add-container-btn {
-    max-width: 220px;
-    margin: 12px auto 0 auto;
+#editContainerArea .tim-vertical .container-input {
+    font-size: clamp(16px, 4.5vw, 20px);
 }
 
 /* Split mode — lebih kompak karena 2 kolom */
@@ -2626,32 +2586,6 @@ html.light .icon-moon {
   pointer-events: none; /* agar tidak mengganggu klik */
 }
 
-/* ===== SAMPLE MODE VERTICAL & WARNA ===== */
-.sample-vertical {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
-.sample-vertical .col-section {
-    width: 100%;
-}
-
-/* Warna untuk Berat Mentah (hijau) */
-.sample-raw {
-    border-color: var(--sample-raw) !important;
-    background: var(--sample-raw-bg) !important;
-}
-.sample-soaked {
-    border-color: var(--sample-soaked) !important;
-    background: var(--sample-soaked-bg) !important;
-}
-.sample-stirfried {
-    border-color: var(--sample-stirfried) !important;
-    background: var(--sample-stirfried-bg) !important;
-}
-
-
 /* ==================== BERANDA (RINGKASAN) ==================== */
 .bd-card {
     margin: 12px;
@@ -2766,6 +2700,12 @@ html.light .icon-moon {
     text-align: center;
     margin-top: 4px;
 }
+.bd-tim-line {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+.bd-tim-line .bd-tim-porsi { width: 70px; }
 .bd-add {
     width: 100%;
     margin-top: 12px;
@@ -2915,6 +2855,24 @@ html.light .icon-moon {
     color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.5px;
+}
+.lp-tim-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--border);
+}
+.lp-tim-label {
+    flex: 1;
+    font-size: 13px;
+    font-weight: 600;
+}
+.lp-tim-val {
+    font-size: 12px;
+    font-family: var(--mono);
+    text-align: right;
+    min-width: 90px;
 }
 .lp-top-row {
     display: flex;

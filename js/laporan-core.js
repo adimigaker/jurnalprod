@@ -57,20 +57,16 @@
         return { from: value.from, to: value.to, label: `${fmtShort(value.from)} – ${fmtShort(value.to)}` };
     }
 
+    const TIM_KEYS = ["kecil", "besar", "smp", "balita", "busui"];
+    const TIM_LABELS = { kecil: "Kecil", besar: "Besar", smp: "SMP", balita: "Balita", busui: "Busui" };
+
     function colKeys(p) {
-        if (p.sample) return ["raw", "soaked", "stirfried"];
+        if (p.sample) return TIM_KEYS;
         if (p.split) return ["kecil", "besar"];
         return ["single"];
     }
     function colLabels(p) {
-        if (p.sample) {
-            const L = p.sampleLabels || {};
-            return {
-                raw: L.raw || "Mentah",
-                soaked: L.soaked || "Proses",
-                stirfried: L.stirfried || "Jadi"
-            };
-        }
+        if (p.sample) return TIM_LABELS;
         if (p.split) return { kecil: "Kecil", besar: "Besar" };
         return { single: "Produksi" };
     }
@@ -81,6 +77,7 @@
         return p.targetSingle || 0;
     }
     function colTotal(p, col) {
+        if (p.sample) return p.containers[col] && p.containers[col].berat || 0;
         return (p.containers[col] || []).reduce((s, c) => s + (c.val || 0) * (c.mult || 1), 0);
     }
     function productTotal(p) {
@@ -90,6 +87,17 @@
         if (p.sample) return 0;
         if (p.split) return (p.targetKecil || 0) + (p.targetBesar || 0);
         return p.targetSingle || 0;
+    }
+
+    function timTotals(rows) {
+        return TIM_KEYS.map(k => ({
+            key: k,
+            label: TIM_LABELS[k],
+            berat: Math.round(
+                rows.reduce((s, p) => s + ((p.containers && p.containers[k] && p.containers[k].berat) || 0), 0) * 100
+            ) / 100,
+            porsi: rows.reduce((s, p) => s + ((p.containers && p.containers[k] && p.containers[k].porsi) || 0), 0)
+        }));
     }
 
     function filterProducts(products, { from, to, names, mode }) {
@@ -164,12 +172,15 @@
         fmtLong,
         fmtShort,
         rangeForPeriod,
+        TIM_KEYS,
+        TIM_LABELS,
         colKeys,
         colLabels,
         colTarget,
         colTotal,
         productTotal,
         productTarget,
+        timTotals,
         filterProducts,
         aggregateStats,
         groupByDate

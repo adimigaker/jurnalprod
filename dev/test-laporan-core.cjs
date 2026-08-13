@@ -38,36 +38,45 @@ const dimsum = {
 assert.strictEqual(C.productTotal(dimsum), 20);
 assert.strictEqual(C.productTarget(dimsum), 15);
 
-const sample = {
+const tim = {
     id: "3", name: "Nasi Goreng", date: "2026-08-14", sample: true,
-    containers: { raw: [{ val: 5, mult: 1 }], soaked: [{ val: 4, mult: 1 }], stirfried: [{ val: 3, mult: 1 }] }
+    containers: { kecil: { berat: 2.5, porsi: 10 }, besar: { berat: 3.75, porsi: 15 } }
 };
-assert.strictEqual(C.productTotal(sample), 12);
-assert.strictEqual(C.productTarget(sample), 0);
+assert.strictEqual(C.productTotal(tim), 6.25);
+assert.strictEqual(C.productTarget(tim), 0);
+assert.strictEqual(C.colTotal(tim, "kecil"), 2.5);
+assert.strictEqual(C.colTotal(tim, "busui"), 0);
+assert.deepStrictEqual(C.colKeys(tim), ["kecil", "besar", "smp", "balita", "busui"]);
+const tt = C.timTotals([tim]);
+assert.strictEqual(tt[0].berat, 2.5);
+assert.strictEqual(tt[0].porsi, 10);
+assert.strictEqual(tt[1].berat, 3.75);
+assert.strictEqual(tt[4].berat, 0);
 
 // --- filterProducts ---
-const rows = [ayam, dimsum, sample];
+const rows = [ayam, dimsum, tim];
 assert.deepStrictEqual(C.filterProducts(rows, { from: "2026-08-01", to: "2026-08-31", names: null, mode: "all" }), rows);
 assert.deepStrictEqual(C.filterProducts(rows, { from: "2026-08-01", to: "2026-08-31", names: null, mode: "split" }).map(p => p.name), ["Ayam Geprek"]);
 assert.deepStrictEqual(C.filterProducts(rows, { from: "2026-08-01", to: "2026-08-31", names: new Set(["Dimsum"]), mode: "all" }).map(p => p.name), ["Dimsum"]);
+assert.deepStrictEqual(C.filterProducts(rows, { from: "2026-08-01", to: "2026-08-31", names: null, mode: "sample" }).map(p => p.name), ["Nasi Goreng"]);
 assert.deepStrictEqual(C.filterProducts(rows, { from: "2026-08-13", to: "2026-08-13", names: null, mode: "all" }).map(p => p.name), ["Ayam Geprek", "Dimsum"]);
 
 // --- aggregateStats ---
 const st = C.aggregateStats(rows, 2);
 assert.strictEqual(st.days, 2);
 assert.strictEqual(st.uniqueProducts, 3);
-assert.strictEqual(st.totalProduksi, 55);
+assert.strictEqual(st.totalProduksi, 49.25);
 assert.strictEqual(st.totalTarget, 30);
-assert.strictEqual(st.pencapaian, 183);
-assert.strictEqual(st.perHari, 27.5);
+assert.strictEqual(st.pencapaian, 164);
+assert.strictEqual(st.perHari, 24.63);
 assert.deepStrictEqual(st.topProducts.map(t => t.name), ["Ayam Geprek", "Dimsum", "Nasi Goreng"]);
 assert.strictEqual(st.topProducts[0].total, 23);
 
-const stNoTarget = C.aggregateStats([sample], 1);
+const stNoTarget = C.aggregateStats([tim], 1);
 assert.strictEqual(stNoTarget.pencapaian, null);
 
 // --- groupByDate ---
-const g = C.groupByDate([dimsum, ayam, sample]);
+const g = C.groupByDate([dimsum, ayam, tim]);
 assert.deepStrictEqual(g.map(x => x.date), ["2026-08-14", "2026-08-13"]);
 assert.strictEqual(g[1].dayTotal, 43);
 assert.strictEqual(g[1].items.length, 2);

@@ -5,7 +5,7 @@ let lpMode = "all";
 let lpQuery = "";
 
 const LP_MODE_LABEL = p =>
-    p.sample ? "Sample" : p.split ? "Split" : "Single";
+    p.sample ? "Timbangan" : p.split ? "Split" : "Single";
 
 function lpColsHtml(p) {
     const keys = LaporanCore.colKeys(p);
@@ -13,11 +13,32 @@ function lpColsHtml(p) {
     return keys
         .map(k => {
             const total = LaporanCore.colTotal(p, k);
+            if (p.sample) {
+                const c = p.containers[k] || {};
+                return `<span class="lp-cols-item">${labels[k]} ${fmtBerat(total)} kg${c.porsi ? ` · ${fmtPorsi(c.porsi)} porsi` : ""}</span>`;
+            }
             const target = LaporanCore.colTarget(p, k);
-            const tgt = p.sample || !target ? "" : ` / ${formatNumberForDisplay(target)}`;
+            const tgt = !target ? "" : ` / ${formatNumberForDisplay(target)}`;
             return `<span class="lp-cols-item">${labels[k]} ${formatNumberForDisplay(total)}${tgt}</span>`;
         })
         .join("");
+}
+
+function lpTimSection(rows) {
+    if (!rows.some(p => p.sample)) return "";
+    const tt = LaporanCore.timTotals(rows);
+    const rowsHtml = tt
+        .map(t => `
+            <div class="lp-tim-row">
+                <span class="lp-tim-label">${t.label}</span>
+                <span class="lp-tim-val">${fmtBerat(t.berat)} kg</span>
+                <span class="lp-tim-val">${t.porsi > 0 ? fmtPorsi(t.porsi) + " porsi" : "–"}</span>
+            </div>`)
+        .join("");
+    return `<div class="lp-section">
+        <div class="lp-section-title">Timbangan per Kategori</div>
+        <div class="lp-tim-grid">${rowsHtml}</div>
+    </div>`;
 }
 
 function lpStatsHtml(stats) {
@@ -115,11 +136,13 @@ function lpReportData() {
 
 function renderLaporanBody() {
     const { range, stats, groups } = lpReportData();
+    const rows = groups.flatMap(g => g.items);
     const body = $("#lpBody");
     if (!body) return;
     body.innerHTML = `
         <div class="lp-period-label">${range.label}</div>
         ${lpStatsHtml(stats)}
+        ${lpTimSection(rows)}
         ${lpTopHtml(stats.topProducts)}
         <div class="lp-section"><div class="lp-section-title">Daftar Harian</div></div>
         ${lpGroupsHtml(groups)}`;
@@ -152,7 +175,7 @@ function renderLaporan() {
                     <button class="lp-chip ${lpMode === "all" ? "on" : ""}" data-mode="all">Semua</button>
                     <button class="lp-chip ${lpMode === "single" ? "on" : ""}" data-mode="single">Single</button>
                     <button class="lp-chip ${lpMode === "split" ? "on" : ""}" data-mode="split">Split</button>
-                    <button class="lp-chip ${lpMode === "sample" ? "on" : ""}" data-mode="sample">Sample</button>
+                    <button class="lp-chip ${lpMode === "sample" ? "on" : ""}" data-mode="sample">Timbangan</button>
                 </div>
             </div>
         </div>
@@ -248,9 +271,10 @@ $("#laporanBtn").addEventListener("click", () => {
 const LP_IMG = { bg: "#f8fafc", text: "#0f172a", muted: "#64748b", accent: "#388bfd", barBg: "#e2e8f0", cardBg: "#ffffff", border: "#e2e8f0" };
 const lpClip = (s, n) => (s.length > n ? s.slice(0, n) + "…" : s);
 
-function lpExportHeight(stats, groups) {
+function lpExportHeight(stats, groups, hasTim) {
     let h = 150; // title + label
     h += 96; // stats grid
+    if (hasTim) h += 40 + 5 * 30;
     if (stats.topProducts.length) h += 40 + stats.topProducts.length * 44;
     for (const g of groups) h += 50 + g.items.length * 72;
     return Math.max(h + 40, 480);
@@ -258,8 +282,9 @@ function lpExportHeight(stats, groups) {
 
 function exportLaporanImage() {
     const { range, stats, groups } = lpReportData();
+    const hasTim = groups.some(g => g.items.some(p => p.sample));
     const W = 1080;
-    const H = lpExportHeight(stats, groups);
+    const H = lpExportHeight(stats, groups, hasTim);
     const canvas = document.createElement("canvas");
     canvas.width = W;
     canvas.height = H;
@@ -304,6 +329,22 @@ function exportLaporanImage() {
     });
 
     let y = 140 + Math.ceil(items.length / 3) * (boxH + 12) + 8;
+
+    // --- timbangan per kategori ---
+    if (hasTim) {
+        text("TIMBANGAN PER KATEGORI", pad, y, 18, 700, LP_IMG.muted);
+        y += 32;
+        const tt = LaporanCore.timTotals(groups.flatMap(g => g.items));
+        for (const t of tt) {
+            ctx.fillStyle = LP_IMG.barBg;
+            ctx.fillRect(pad + 240, y - 14, W - pad * 2 - 240, 1);
+            text(t.label, pad, y + 4, 19, 600);
+            text(fmtBerat(t.berat) + " kg", W - pad - 140, y + 4, 19, 700, LP_IMG.text, "right");
+            text(t.porsi > 0 ? fmtPorsi(t.porsi) + " porsi" : "–", W - pad, y + 4, 19, 700, LP_IMG.accent, "right");
+            y += 30;
+        }
+        y += 8;
+    }
 
     // --- produk teratas ---
     if (stats.topProducts.length) {

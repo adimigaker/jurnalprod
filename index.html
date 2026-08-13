@@ -157,13 +157,13 @@
           <div class="checkbox-desc">Aktifkan dua kolom input dengan target masing-masing</div>
         </div>
       </div>
-      <div class="checkbox-row" id="sampleCheckboxRow">
+      <div class="checkbox-row" id="timCheckboxRow">
         <div class="checkbox-custom">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
         </div>
         <div>
-          <div class="checkbox-text">Sample Mode (Mentah, Proses, Jadi)</div>
-          <div class="checkbox-desc">Aktifkan tiga kolom input untuk sampel (tanpa target, satuan kg)</div>
+          <div class="checkbox-text">Timbangan Mode (Kecil, Besar, SMP, Balita, Busui)</div>
+          <div class="checkbox-desc">Aktifkan 5 kategori berat (kg) + porsi, tanpa target</div>
         </div>
       </div>
     </div>
@@ -320,53 +320,6 @@
       </div>
     </div>
     
-    <!-- Warna Sampel Mode -->
-    <div class="field-group" style="margin-top: 16px">
-      <div class="field-label" style="margin-bottom: 10px">Warna Sampel Mode</div>
-
-      <div style="margin-bottom: 12px">
-        <label class="field-label" style="font-weight:400;margin-bottom:6px;display:block">Berat Mentah</label>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">
-          <button class="color-swatch" data-col="sample-raw" data-hex="#3fb950" style="background:#3fb950"></button>
-          <button class="color-swatch" data-col="sample-raw" data-hex="#2ea043" style="background:#2ea043"></button>
-          <button class="color-swatch" data-col="sample-raw" data-hex="#56d364" style="background:#56d364"></button>
-          <button class="color-swatch" data-col="sample-raw" data-hex="#1f7a3c" style="background:#1f7a3c"></button>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <input type="color" id="sampleRawPicker" value="#3fb950" style="width:36px;height:36px;border:1px solid var(--border);border-radius:8px;cursor:pointer;padding:2px;background:none" />
-          <input class="field-input" type="text" id="sampleRawHex" placeholder="#3fb950" style="flex:1;font-family:var(--mono);font-size:13px" />
-        </div>
-      </div>
-
-      <div style="margin-bottom: 12px">
-        <label class="field-label" style="font-weight:400;margin-bottom:6px;display:block">Berat Proses</label>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">
-          <button class="color-swatch" data-col="sample-soaked" data-hex="#d29922" style="background:#d29922"></button>
-          <button class="color-swatch" data-col="sample-soaked" data-hex="#e3b341" style="background:#e3b341"></button>
-          <button class="color-swatch" data-col="sample-soaked" data-hex="#b57c1c" style="background:#b57c1c"></button>
-          <button class="color-swatch" data-col="sample-soaked" data-hex="#f5c542" style="background:#f5c542"></button>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <input type="color" id="sampleSoakedPicker" value="#d29922" style="width:36px;height:36px;border:1px solid var(--border);border-radius:8px;cursor:pointer;padding:2px;background:none" />
-          <input class="field-input" type="text" id="sampleSoakedHex" placeholder="#d29922" style="flex:1;font-family:var(--mono);font-size:13px" />
-        </div>
-      </div>
-
-      <div>
-        <label class="field-label" style="font-weight:400;margin-bottom:6px;display:block">Berat Jadi</label>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">
-          <button class="color-swatch" data-col="sample-stirfried" data-hex="#388bfd" style="background:#388bfd"></button>
-          <button class="color-swatch" data-col="sample-stirfried" data-hex="#58a6ff" style="background:#58a6ff"></button>
-          <button class="color-swatch" data-col="sample-stirfried" data-hex="#1f6feb" style="background:#1f6feb"></button>
-          <button class="color-swatch" data-col="sample-stirfried" data-hex="#79c0ff" style="background:#79c0ff"></button>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <input type="color" id="sampleStirfriedPicker" value="#388bfd" style="width:36px;height:36px;border:1px solid var(--border);border-radius:8px;cursor:pointer;padding:2px;background:none" />
-          <input class="field-input" type="text" id="sampleStirfriedHex" placeholder="#388bfd" style="flex:1;font-family:var(--mono);font-size:13px" />
-        </div>
-      </div>
-    </div>
-
     <div id="syncStatus" style="display:none;margin-bottom:12px;padding:10px 12px;border-radius:var(--radius-sm);font-size:13px;"></div>
 
     <div class="modal-actions" style="flex-direction:column;gap:8px">
@@ -377,7 +330,7 @@
   </div>
 </div>
 
-<!-- Modal Edit Produk (tanpa checkbox split/sample) -->
+<!-- Modal Edit Produk (tanpa checkbox split/timbangan) -->
 <div class="modal-overlay" id="editModalOverlay">
   <div class="modal-sheet">
     <div class="modal-handle"></div>

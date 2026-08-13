@@ -40,6 +40,21 @@ function parseNumberFromInput(value) {
     return isNaN(parsed) ? 0 : parsed;
 }
 
+function fmtBerat(num) {
+    if (num === undefined || num === null || isNaN(num)) return "0,00";
+    return num.toFixed(2).replace(".", ",");
+}
+
+function fmtPorsi(num) {
+    const v = parseInt(num, 10);
+    return isNaN(v) || v === 0 ? "–" : String(v);
+}
+
+function parsePorsi(value) {
+    const v = parseInt(String(value).replace(/[,.]/g, ""), 10);
+    return isNaN(v) ? 0 : v;
+}
+
 function deepEqual(a, b) {
     if (a === b) return true;
     if (a == null || b == null) return false;
@@ -107,8 +122,7 @@ const Sync = {
         target_kecil: p.targetKecil || 0,
         containers: p.containers,
         unit: p.unit || "pcs",
-        note: p.note || "",
-        sample_labels: p.sampleLabels || null   // ✅ tambahkan
+        note: p.note || ""
       };
     },
 
@@ -125,8 +139,7 @@ const Sync = {
         targetKecil: r.target_kecil || 0,
         containers: r.containers,
         unit: r.unit || "pcs",
-        note: r.note || "",
-        sampleLabels: r.sample_labels || null   // ✅ tambahkan
+        note: r.note || ""
      };
     },
 
@@ -139,7 +152,9 @@ const Sync = {
             );
             if (!r.ok) throw new Error(await r.text());
             const rows = await r.json();
-            const newData = rows.map(Sync.fromRow);
+            const newData = rows
+                .filter(r => !Array.isArray(r.containers && r.containers.raw))
+                .map(Sync.fromRow);
             const currentData = DB.get();
             if (!deepEqual(currentData, newData)) {
                 DB.save(newData);
@@ -573,11 +588,7 @@ function renderHitungan() {
 
 function renderProductCard(p) {
     const isSplit = p.split;
-    const isSample = p.sample;
-    let colClass = "single";
-    if (isSample) colClass = "triple";
-    else if (isSplit) colClass = "double";
-    else colClass = "single";
+    const isTim = p.sample;
 
     const renderCol = (
         label,
@@ -667,69 +678,30 @@ function renderProductCard(p) {
       </div>`;
     };
 
-    const renderSampleCol = () => {
-    // Pastikan sampleLabels ada, jika tidak buat default
-    if (!p.sampleLabels) {
-        p.sampleLabels = {
-            raw: "Berat Mentah",
-            soaked: "Berat Proses",
-            stirfried: "Berat Jadi"
-        };
-    }
-    
-    const renderRow = (colKey, containers, sampleClass) => {
-        const label = p.sampleLabels[colKey] || colKey;
-        const rows = containers
-            .map((c, i) => {
-                const result = (c.val || 0) * (c.mult || 1);
-                return `<div class="container-row ${sampleClass}">
-                    <div class="container-index">${i + 1}</div>
-                    <div class="container-row-top">
-                        <input class="container-input" type="text" value="${formatNumberForDisplay(c.val)}"
-                            data-pid="${p.id}" data-col="${colKey}" data-cidx="${i}" placeholder="0" />
-                    </div>
-                    <div class="container-row-bottom">
-                        <div class="mult-stepper">
-                            <button class="mult-step-btn mult-minus" data-pid="${p.id}" data-col="${colKey}" data-cidx="${i}">−</button>
-                            <input class="mult-step-input" type="text" value="${c.mult}" min="1" max="999"
-                                data-pid="${p.id}" data-col="${colKey}" data-cidx="${i}" />
-                            <button class="mult-step-btn mult-plus" data-pid="${p.id}" data-col="${colKey}" data-cidx="${i}">+</button>
-                        </div>
-                    </div>
-                    <div class="container-row-result">
-                        <button class="remove-btn" data-pid="${p.id}" data-col="${colKey}" data-cidx="${i}">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
-                        </button>
-                        <div class="result-group">
-                            <span style="font-size:12px;color:var(--text-muted);margin-right:6px">=</span>
-                            <span class="mult-result" data-res="${p.id}-${colKey}-${i}">${formatNumberForDisplay(result)}</span>
-                            <span style="font-size:12px;color:var(--text-muted);margin-left:4px">${p.unit || "kg"}</span>
-                        </div>
-                    </div>
-                </div>`;
-            })
-            .join("");
-            
-        return `<div class="col-section">
-            <div class="col-label">
-                <div class="col-label-left">
-                   <span class="sample-label-text">${label}</span>
-                    <button class="edit-target-btn" data-pid="${p.id}" data-col="${colKey}" title="Edit label">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                    </button>
+    const renderTimCol = () => {
+        const keys = LaporanCore.TIM_KEYS;
+        const labels = LaporanCore.TIM_LABELS;
+        return `<div class="tim-vertical">
+            ${keys
+                .map(k => {
+                    const c = p.containers[k] || { berat: 0, porsi: 0 };
+                    return `<div class="tim-row">
+                <div class="tim-label">${labels[k]}</div>
+                <div class="tim-field">
+                    <input class="container-input tim-berat-input" type="text" value="${fmtBerat(c.berat)}"
+                        data-pid="${p.id}" data-col="${k}" placeholder="0" inputmode="decimal" />
+                    <span class="tim-unit">kg</span>
                 </div>
-            </div>
-            <div class="container-list" data-pid="${p.id}" data-col="${colKey}">${rows}</div>
-            <button class="add-container-btn" data-pid="${p.id}" data-col="${colKey}">Tambah</button>
+                <div class="tim-field">
+                    <input class="container-input tim-porsi-input" type="text" value="${fmtPorsi(c.porsi)}"
+                        data-pid="${p.id}" data-col="${k}" placeholder="–" inputmode="numeric" />
+                    <span class="tim-unit">porsi</span>
+                </div>
+            </div>`;
+                })
+                .join("")}
         </div>`;
     };
-    
-    return `<div class="sample-vertical">
-        ${renderRow("raw", p.containers.raw, "sample-raw")}
-        ${renderRow("soaked", p.containers.soaked, "sample-soaked")}
-        ${renderRow("stirfried", p.containers.stirfried, "sample-stirfried")}
-    </div>`;
-};
 
     const summaryHTML = renderSummary(p);
     let headerTotal = 0,
@@ -737,7 +709,7 @@ function renderProductCard(p) {
         diff = 0,
         dClass = "",
         dStr = "";
-    if (!isSample) {
+    if (!isTim) {
         const calcTotal = () => {
             if (isSplit) {
                 const k = (p.containers.kecil || []).reduce(
@@ -771,41 +743,17 @@ function renderProductCard(p) {
             diff >= 0
                 ? `+${formatNumberForDisplay(diff)}`
                 : `${formatNumberForDisplay(diff)}`;
-    }
-    
-    // Untuk Sample Mode: hitung berat mentah dan berat jadi (dengan label kustom)
-let sampleHeaderMain = "";
-let sampleHeaderDiff = "";
-let sampleDiffClass = "";
-if (isSample) {
-    const rawTotal = (p.containers.raw || []).reduce(
-        (s, c) => s + (c.val || 0) * (c.mult || 1),
-        0
-    );
-    const stirfriedTotal = (p.containers.stirfried || []).reduce(
-        (s, c) => s + (c.val || 0) * (c.mult || 1),
-        0
-    );
-    
-    // Tampilan collapsed: hanya angka → angka (tanpa label)
-    sampleHeaderMain = `${formatNumberForDisplay(rawTotal)} → ${formatNumberForDisplay(stirfriedTotal)}`;
-    
-    // Hitung persentase perubahan
-    if (rawTotal === 0) {
-        sampleHeaderDiff = "N/A";
-        sampleDiffClass = "";
     } else {
-        const diffPercent = ((stirfriedTotal - rawTotal) / rawTotal) * 100;
-        const sign = diffPercent > 0 ? "+" : "";
-        sampleHeaderDiff = `${sign}${diffPercent.toFixed(1)}%`;
-        sampleDiffClass = diffPercent > 0 ? "diff-positive" : (diffPercent < 0 ? "diff-negative" : "diff-zero");
+        headerTotal = LaporanCore.TIM_KEYS.reduce(
+            (s, k) => s + ((p.containers[k] && p.containers[k].berat) || 0),
+            0
+        );
     }
-}
 
     const meta = isSplit
         ? "Porsi Kecil + Besar"
-        : isSample
-          ? "Sampel"
+        : isTim
+          ? "Timbangan"
           : "Single";
 
     let productCols = "";
@@ -814,8 +762,8 @@ if (isSample) {
             ${renderCol("Porsi Kecil", p.targetKecil, p.containers.kecil, "kecil")}
             ${renderCol("Porsi Besar", p.targetBesar, p.containers.besar, "besar")}
         </div>`;
-    } else if (isSample) {
-        productCols = renderSampleCol();
+    } else if (isTim) {
+        productCols = renderTimCol();
     } else {
         productCols = `<div class="product-cols single">
             ${renderCol("Produksi", p.targetSingle, p.containers.single, "single")}
@@ -828,16 +776,15 @@ if (isSample) {
       <div class="product-header">
         <div style="flex:1;min-width:0">
           <div class="riwayat-name">${p.name}</div>
-          <div class="riwayat-meta">${meta} ${!isSample ? `· Target ${formatNumberForDisplay(target)}` : ""}</div>
+          <div class="riwayat-meta">${meta} ${!isTim ? `· Target ${formatNumberForDisplay(target)}` : ""}</div>
         </div>
         <div style="display:flex;align-items:center;gap:6px">
           <div style="text-align:right">
             ${
-                !isSample
+                !isTim
                     ? `<div class="riwayat-total card-header-total">${formatNumberForDisplay(headerTotal)}</div>
                        <div style="font-size:11px;font-family:var(--mono)" class="${dClass} card-header-diff">${dStr}</div>`
-                    : `<div class="riwayat-total card-header-total">${sampleHeaderMain}</div>
-                       <div style="font-size:11px;font-family:var(--mono)" class="${sampleDiffClass} card-header-diff">${sampleHeaderDiff}</div>`
+                    : `<div class="riwayat-total card-header-total">${fmtBerat(headerTotal)} kg</div>`
             }
           </div>
           <button class="delete-product-btn" data-pid="${p.id}" title="Hapus Produk">
@@ -859,65 +806,47 @@ if (isSample) {
 
 function renderSummary(p) {
     const isSplit = p.split;
-    const isSample = p.sample;
-    const unit = p.unit || (isSample ? "kg" : "pcs");
+    const isTim = p.sample;
+    const unit = p.unit || (isTim ? "kg" : "pcs");
 
-    if (isSample) {
-    const rawTotal = (p.containers.raw || []).reduce(
-        (s, c) => s + (c.val || 0) * (c.mult || 1),
-        0
-    );
-    const soakedTotal = (p.containers.soaked || []).reduce(
-        (s, c) => s + (c.val || 0) * (c.mult || 1),
-        0
-    );
-    const stirfriedTotal = (p.containers.stirfried || []).reduce(
-        (s, c) => s + (c.val || 0) * (c.mult || 1),
-        0
-    );
-    
-    // Gunakan label kustom
-    const labels = p.sampleLabels || {
-        raw: "Berat Mentah",
-        soaked: "Berat Proses",
-        stirfried: "Berat Jadi"
-    };
-    
-    const calcPercent = (awal, akhir) => {
-        if (awal === 0) return { text: "N/A", class: "" };
-        const diff = akhir - awal;
-        const percent = (diff / awal) * 100;
-        const sign = diff > 0 ? "+" : "";
-        return {
-            text: `${sign}${percent.toFixed(1)}%`,
-            class: diff > 0 ? "diff-positive" : diff < 0 ? "diff-negative" : "diff-zero"
-        };
-    };
-    
-    const rawToSoaked = calcPercent(rawTotal, soakedTotal);
-    const soakedToStir = calcPercent(soakedTotal, stirfriedTotal);
-    const rawToStir = calcPercent(rawTotal, stirfriedTotal);
-    
-    let noteHtml = "";
-    if (p.note) {
-        noteHtml = `<div class="summary-note">
-            <div class="summary-note-label">📝 Catatan:</div>
-            <div class="summary-note-text">${p.note.replace(/\n/g, "<br>")}</div>
+    if (isTim) {
+        const totalBerat = LaporanCore.TIM_KEYS.reduce(
+            (s, k) => s + ((p.containers[k] && p.containers[k].berat) || 0),
+            0
+        );
+        const totalPorsi = LaporanCore.TIM_KEYS.reduce(
+            (s, k) => s + ((p.containers[k] && p.containers[k].porsi) || 0),
+            0
+        );
+        let noteHtml = "";
+        if (p.note) {
+            noteHtml = `<div class="summary-note">
+                <div class="summary-note-label">📝 Catatan:</div>
+                <div class="summary-note-text">${p.note.replace(/\n/g, "<br>")}</div>
+            </div>`;
+        }
+        const rows = LaporanCore.TIM_KEYS.map(k => {
+            const c = p.containers[k] || {};
+            return `<div class="summary-row">
+                <span class="summary-label">${LaporanCore.TIM_LABELS[k]}</span>
+                <span class="summary-val">${fmtBerat(c.berat)} kg${c.porsi ? ` · ${fmtPorsi(c.porsi)} porsi` : ""}</span>
+            </div>`;
+        }).join("");
+        return `<div class="summary-box">
+            <div class="summary-title">Ringkasan Timbangan</div>
+            <div class="summary-grid">
+                ${rows}
+                <div class="summary-divider"></div>
+                <div class="summary-row summary-total">
+                    <span>Total Berat</span><span class="summary-val">${fmtBerat(totalBerat)} ${unit}</span>
+                </div>
+                <div class="summary-row">
+                    <span>Total Porsi</span><span class="summary-val">${totalPorsi > 0 ? fmtPorsi(totalPorsi) : "–"}</span>
+                </div>
+                ${noteHtml}
+            </div>
         </div>`;
     }
-    
-    return `<div class="summary-box">
-        <div class="summary-title">Ringkasan Sampel</div>
-        <div class="summary-grid">
-            <div class="summary-row"><span>${labels.raw}</span><span>${formatNumberForDisplay(rawTotal)} ${unit}</span></div>
-            <div class="summary-row"><span>${labels.soaked}</span><span>${formatNumberForDisplay(soakedTotal)} ${unit} <span class="${rawToSoaked.class}">(${rawToSoaked.text})</span></span></div>
-            <div class="summary-row"><span>${labels.stirfried}</span><span>${formatNumberForDisplay(stirfriedTotal)} ${unit} <span class="${soakedToStir.class}">(${soakedToStir.text})</span></span></div>
-            <div class="summary-divider"></div>
-            <div class="summary-row"><span>Perubahan ${labels.raw} → ${labels.stirfried}</span><span class="${rawToStir.class}">${rawToStir.text}</span></div>
-            ${noteHtml}
-        </div>
-    </div>`;
-}
 
     const diffLabel = (diff, target) => {
         if (diff === 0) return { text: "Sesuai Target", cls: "diff-zero" };
@@ -1083,6 +1012,38 @@ function attachCardEvents(ctx) {
         });
     });
 
+    $$(".tim-berat-input", ctx).forEach(input => {
+        const commit = () => {
+            const pid = input.dataset.pid,
+                col = input.dataset.col;
+            const data = DB.get();
+            const p = data.find(x => x.id === pid);
+            if (!p) return;
+            if (!p.containers[col]) p.containers[col] = {};
+            p.containers[col].berat = parseNumberFromInput(input.value);
+            saveAndSync(pid, data);
+            input.value = fmtBerat(p.containers[col].berat);
+            refreshSummary(pid);
+        };
+        input.addEventListener("change", commit);
+        input.addEventListener("blur", commit);
+    });
+    $$(".tim-porsi-input", ctx).forEach(input => {
+        const commit = () => {
+            const pid = input.dataset.pid,
+                col = input.dataset.col;
+            const data = DB.get();
+            const p = data.find(x => x.id === pid);
+            if (!p) return;
+            if (!p.containers[col]) p.containers[col] = {};
+            p.containers[col].porsi = parsePorsi(input.value);
+            saveAndSync(pid, data);
+            input.value = fmtPorsi(p.containers[col].porsi);
+        };
+        input.addEventListener("change", commit);
+        input.addEventListener("blur", commit);
+    });
+
     $$(".mult-minus", ctx).forEach(btn => {
         btn.addEventListener("click", () => {
             const pid = btn.dataset.pid,
@@ -1191,79 +1152,6 @@ function attachCardEvents(ctx) {
         });
     });
     
-    // Handler untuk edit label sample
-// Handler untuk edit label sample (sekarang menggunakan class .edit-target-btn juga)
-$$(".edit-target-btn", ctx).forEach(btn => {
-    // Hanya proses jika ini adalah tombol edit label sample (bukan target)
-    // Kita bisa cek dari konteks: jika tidak ada badge target di sebelahnya
-    const parentLabel = btn.closest(".col-label");
-    const hasTargetBadge = parentLabel && parentLabel.querySelector(".target-badge");
-    
-    if (!hasTargetBadge) {
-        btn.addEventListener("click", e => {
-            e.stopPropagation();
-            const pid = btn.dataset.pid;
-            const col = btn.dataset.col;
-            
-            const labelSpan = btn.parentElement.querySelector(".sample-label-text");
-            if (!labelSpan) return;
-            
-            const currentLabel = labelSpan.textContent;
-            
-            // Buat input untuk edit
-            const input = document.createElement("input");
-            input.type = "text";
-            input.value = currentLabel;
-            input.className = "sample-label-input";
-            input.style.cssText = `
-                font-size: 11px;
-                font-weight: 600;
-                text-transform: uppercase;
-                letter-spacing: 0.6px;
-                background: var(--bg-input);
-                border: 1px solid var(--border-focus);
-                border-radius: 4px;
-                color: var(--text);
-                padding: 2px 4px;
-                width: 100%;
-                max-width: 150px;
-            `;
-            
-            // Ganti span dengan input
-            labelSpan.replaceWith(input);
-            input.focus();
-            input.select();
-            
-            // Simpan saat blur atau Enter
-            const saveLabel = () => {
-                const newLabel = input.value.trim() || currentLabel;
-                const newSpan = document.createElement("span");
-                newSpan.className = "sample-label-text";
-                newSpan.textContent = newLabel;
-                input.replaceWith(newSpan);
-                
-                // Simpan ke database
-                const data = DB.get();
-                const p = data.find(x => x.id === pid);
-                if (p) {
-                    if (!p.sampleLabels) p.sampleLabels = {};
-                    p.sampleLabels[col] = newLabel;
-                    saveAndSync(pid, data);
-                    refreshSummary(pid);
-                }
-            };
-            
-            input.addEventListener("blur", saveLabel);
-            input.addEventListener("keydown", e => {
-                if (e.key === "Enter") {
-                    e.preventDefault();
-                    saveLabel();
-                }
-            });
-        });
-    }
-});
-
     $$(".delete-product-btn", ctx).forEach(btn => {
         btn.addEventListener("click", e => {
             e.stopPropagation();
@@ -1346,7 +1234,16 @@ function refreshSummary(pid) {
 
     const totalEl = card.querySelector(".card-header-total");
     const diffEl = card.querySelector(".card-header-diff");
-    if (totalEl && !p.sample) {
+    if (!totalEl) return;
+    if (p.sample) {
+        const tot = LaporanCore.TIM_KEYS.reduce(
+            (s, k) => s + ((p.containers[k] && p.containers[k].berat) || 0),
+            0
+        );
+        totalEl.textContent = `${fmtBerat(tot)} kg`;
+        return;
+    }
+    if (totalEl) {
         let tot = 0,
             tgt = 0;
         if (p.split) {
@@ -1391,7 +1288,7 @@ function openAddModal(date) {
 
     // Reset checkbox
     $("#splitCheckboxRow").classList.remove("checked");
-    $("#sampleCheckboxRow").classList.remove("checked");
+    $("#timCheckboxRow").classList.remove("checked");
 
     // Reset tampilan target
     $("#singleTargetWrap").style.display = "block";
@@ -1413,21 +1310,21 @@ function closeModal() {
 // Event untuk Split Mode
 $("#splitCheckboxRow").addEventListener("click", () => {
     const splitRow = $("#splitCheckboxRow");
-    const sampleRow = $("#sampleCheckboxRow");
+    const timRow = $("#timCheckboxRow");
     const isSplit = !splitRow.classList.contains("checked");
 
     splitRow.classList.toggle("checked");
 
     if (isSplit) {
-        // Aktifkan Split, nonaktifkan Sample
-        sampleRow.classList.remove("checked");
+        // Aktifkan Split, nonaktifkan Timbangan
+        timRow.classList.remove("checked");
         $("#singleTargetWrap").style.display = "none";
         $("#subTargets").classList.add("visible"); // pakai class, bukan style.display
         $("#inputUnit").value = "pcs";
     } else {
         // Nonaktifkan Split
-        if (sampleRow.classList.contains("checked")) {
-            // Sample aktif
+        if (timRow.classList.contains("checked")) {
+            // Timbangan aktif
             $("#singleTargetWrap").style.display = "none";
             $("#subTargets").classList.remove("visible");
             $("#inputUnit").value = "kg";
@@ -1440,22 +1337,22 @@ $("#splitCheckboxRow").addEventListener("click", () => {
     }
 });
 
-// Event untuk Sample Mode
-$("#sampleCheckboxRow").addEventListener("click", () => {
-    const sampleRow = $("#sampleCheckboxRow");
+// Event untuk Timbangan Mode
+$("#timCheckboxRow").addEventListener("click", () => {
+    const timRow = $("#timCheckboxRow");
     const splitRow = $("#splitCheckboxRow");
-    const isSample = !sampleRow.classList.contains("checked");
+    const isTim = !timRow.classList.contains("checked");
 
-    sampleRow.classList.toggle("checked");
+    timRow.classList.toggle("checked");
 
-    if (isSample) {
-        // Aktifkan Sample, nonaktifkan Split
+    if (isTim) {
+        // Aktifkan Timbangan, nonaktifkan Split
         splitRow.classList.remove("checked");
         $("#singleTargetWrap").style.display = "none";
         $("#subTargets").classList.remove("visible"); // sembunyikan subTargets
         $("#inputUnit").value = "kg";
     } else {
-        // Nonaktifkan Sample
+        // Nonaktifkan Timbangan
         if (splitRow.classList.contains("checked")) {
             // Split aktif
             $("#singleTargetWrap").style.display = "none";
@@ -1481,11 +1378,11 @@ $("#btnOk").addEventListener("click", () => {
     const existingToday = DB.getByDate(date);
     const unit =
         $("#inputUnit").value.trim() ||
-        ($("#sampleCheckboxRow").classList.contains("checked") ? "kg" : "pcs");
+        ($("#timCheckboxRow").classList.contains("checked") ? "kg" : "pcs");
     const note = $("#inputNote").value.trim();
 
     const isSplit = $("#splitCheckboxRow").classList.contains("checked");
-    const isSample = $("#sampleCheckboxRow").classList.contains("checked");
+    const isTim = $("#timCheckboxRow").classList.contains("checked");
 
     let containers;
     if (isSplit) {
@@ -1493,11 +1390,13 @@ $("#btnOk").addEventListener("click", () => {
             besar: [{ val: 0, mult: 1 }],
             kecil: [{ val: 0, mult: 1 }]
         };
-    } else if (isSample) {
+    } else if (isTim) {
         containers = {
-            raw: [{ val: 0, mult: 1 }],
-            soaked: [{ val: 0, mult: 1 }],
-            stirfried: [{ val: 0, mult: 1 }]
+            kecil: { berat: 0, porsi: 0 },
+            besar: { berat: 0, porsi: 0 },
+            smp: { berat: 0, porsi: 0 },
+            balita: { berat: 0, porsi: 0 },
+            busui: { berat: 0, porsi: 0 }
         };
     } else {
         containers = { single: [{ val: 0, mult: 1 }] };
@@ -1508,7 +1407,7 @@ $("#btnOk").addEventListener("click", () => {
         name,
         date,
         split: isSplit,
-        sample: isSample,
+        sample: isTim,
         order: existingToday.length,
         targetSingle: parseNumberFromInput($("#targetSingle").value),
         targetBesar: parseNumberFromInput($("#targetBesar").value),
@@ -1517,15 +1416,6 @@ $("#btnOk").addEventListener("click", () => {
         unit: unit,
         note: note
     };
-
-    // Tambahkan sampleLabels jika Sample Mode
-    if (isSample) {
-        product.sampleLabels = {
-            raw: "Berat Mentah",
-            soaked: "Berat Proses",
-            stirfried: "Berat Jadi"
-        };
-    }
 
     // Simpan produk
     DB.addProduct(product);
@@ -1611,65 +1501,25 @@ function renderEditCol(label, colKey, target, containers, accentColor = null) {
     </div>`;
 }
 
-function renderEditSampleCol() {
+function renderEditTimCol() {
     const p = editState;
-    
-    // Pastikan sampleLabels ada
-    if (!p.sampleLabels) {
-        p.sampleLabels = {
-            raw: "Berat Mentah",
-            soaked: "Berat Proses",
-            stirfried: "Berat Jadi"
-        };
-    }
-    
-    const renderRow = (colKey, containers, sampleClass) => {
-        const label = p.sampleLabels[colKey] || colKey;
-        const rows = containers
-            .map((c, i) => {
-                const result = (c.val || 0) * (c.mult || 1);
-                return `<div class="container-row ${sampleClass}">
-                    <div class="container-index">${i + 1}</div>
-                    <div class="container-row-top">
-                        <input class="container-input edit-val-input" type="text" value="${formatNumberForDisplay(c.val)}"
-                            data-col="${colKey}" data-cidx="${i}" placeholder="0" />
-                    </div>
-                    <div class="container-row-bottom">
-                        <div class="mult-stepper">
-                            <button class="mult-step-btn edit-mult-minus" data-col="${colKey}" data-cidx="${i}">−</button>
-                            <input class="mult-step-input edit-mult-input" type="text" value="${c.mult}"
-                                min="1" max="999" data-col="${colKey}" data-cidx="${i}" />
-                            <button class="mult-step-btn edit-mult-plus" data-col="${colKey}" data-cidx="${i}">+</button>
-                        </div>
-                    </div>
-                    <div class="container-row-result">
-                        <button class="remove-btn edit-remove-btn" data-col="${colKey}" data-cidx="${i}">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
-                        </button>
-                        <div class="result-group">
-                            <span style="font-size:12px;color:var(--text-muted);margin-right:6px">=</span>
-                            <span class="mult-result" id="editres-${colKey}-${i}">${formatNumberForDisplay(result)}</span>
-                            <span style="font-size:12px;color:var(--text-muted);margin-left:4px">${p.unit || "kg"}</span>
-                        </div>
-                    </div>
-                </div>`;
-            })
-            .join("");
-            
-        return `<div class="col-section">
-            <div class="col-label">
-                <input type="text" class="edit-sample-label-field" data-col="${colKey}" 
-                    value="${label}" style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.6px;background:var(--bg-input);border:1px solid var(--border);border-radius:4px;color:var(--text);padding:2px 4px;width:100%;max-width:150px;" />
-            </div>
-            <div class="container-list" id="editlist-${colKey}">${rows}</div>
-            <button class="add-container-btn edit-add-btn" data-col="${colKey}">Tambah</button>
-        </div>`;
-    };
-    
-    return `<div class="sample-vertical">
-        ${renderRow("raw", p.containers.raw, "sample-raw")}
-        ${renderRow("soaked", p.containers.soaked, "sample-soaked")}
-        ${renderRow("stirfried", p.containers.stirfried, "sample-stirfried")}
+    return `<div class="tim-vertical">
+        ${LaporanCore.TIM_KEYS.map(k => {
+            const c = p.containers[k] || { berat: 0, porsi: 0 };
+            return `<div class="tim-row">
+                <div class="tim-label">${LaporanCore.TIM_LABELS[k]}</div>
+                <div class="tim-field">
+                    <input class="container-input edit-val-input edit-tim-berat" type="text" value="${fmtBerat(c.berat)}"
+                        data-col="${k}" placeholder="0" inputmode="decimal" />
+                    <span class="tim-unit">kg</span>
+                </div>
+                <div class="tim-field">
+                    <input class="container-input edit-val-input edit-tim-porsi" type="text" value="${fmtPorsi(c.porsi)}"
+                        data-col="${k}" placeholder="–" inputmode="numeric" />
+                    <span class="tim-unit">porsi</span>
+                </div>
+            </div>`;
+        }).join("")}
     </div>`;
 }
 
@@ -1694,7 +1544,7 @@ function renderEditContainerArea() {
             ) +
             `</div>`;
     } else if (p.sample) {
-        area.innerHTML = renderEditSampleCol();
+        area.innerHTML = renderEditTimCol();
     } else {
         area.innerHTML =
             `<div class="product-cols single">` +
@@ -1711,6 +1561,7 @@ function renderEditContainerArea() {
 
 function attachEditContainerEvents(ctx) {
     $$(".edit-val-input", ctx).forEach(inp => {
+        if (!inp.dataset.cidx) return;
         inp.addEventListener("input", () => {
             const col = inp.dataset.col,
                 idx = parseInt(inp.dataset.cidx);
@@ -1718,6 +1569,22 @@ function attachEditContainerEvents(ctx) {
             editState.containers[col][idx].val = newVal;
             refreshEditResult(col, idx);
             inp.value = formatNumberForDisplay(newVal);
+        });
+    });
+    $$(".edit-tim-berat", ctx).forEach(inp => {
+        inp.addEventListener("input", () => {
+            const col = inp.dataset.col;
+            if (!editState.containers[col]) editState.containers[col] = {};
+            editState.containers[col].berat = parseNumberFromInput(inp.value);
+            inp.value = fmtBerat(editState.containers[col].berat);
+        });
+    });
+    $$(".edit-tim-porsi", ctx).forEach(inp => {
+        inp.addEventListener("input", () => {
+            const col = inp.dataset.col;
+            if (!editState.containers[col]) editState.containers[col] = {};
+            editState.containers[col].porsi = parsePorsi(inp.value);
+            inp.value = fmtPorsi(editState.containers[col].porsi);
         });
     });
     $$(".edit-mult-input", ctx).forEach(inp => {
@@ -1773,17 +1640,6 @@ function attachEditContainerEvents(ctx) {
             renderEditContainerArea();
         });
     });
-    // Handler untuk edit label di modal edit
-$$(".edit-sample-label-field", ctx).forEach(inp => {
-    inp.addEventListener("input", () => {
-        const col = inp.dataset.col;
-        const newLabel = inp.value.trim();
-        if (newLabel) {
-            if (!editState.sampleLabels) editState.sampleLabels = {};
-            editState.sampleLabels[col] = newLabel;
-        }
-    });
-});
     $$(".edit-target-field", ctx).forEach(inp => {
         inp.addEventListener("input", () => {
             const col = inp.dataset.col;
@@ -1798,6 +1654,7 @@ $$(".edit-sample-label-field", ctx).forEach(inp => {
     });
     if (window.innerWidth < 768) {
         $$(".edit-val-input", ctx).forEach(inp => {
+            if (!inp.dataset.cidx) return;
             inp.setAttribute("inputmode", "none");
             inp.setAttribute("readonly", "readonly");
             let sx, sy;
@@ -1820,6 +1677,56 @@ $$(".edit-sample-label-field", ctx).forEach(inp => {
                     inp.setAttribute("readonly", "readonly");
                     editState.containers[col][idx].val = val;
                     refreshEditResult(col, idx);
+                });
+            });
+        });
+        $$(".edit-tim-berat", ctx).forEach(inp => {
+            inp.setAttribute("inputmode", "none");
+            inp.setAttribute("readonly", "readonly");
+            let sx, sy;
+            inp.addEventListener("pointerdown", e => {
+                sx = e.clientX;
+                sy = e.clientY;
+            });
+            inp.addEventListener("pointerup", e => {
+                if (
+                    Math.abs(e.clientX - sx) > 8 ||
+                    Math.abs(e.clientY - sy) > 8
+                )
+                    return;
+                e.preventDefault();
+                const col = inp.dataset.col;
+                Numpad.show(inp, val => {
+                    inp.removeAttribute("readonly");
+                    inp.value = fmtBerat(val);
+                    inp.setAttribute("readonly", "readonly");
+                    if (!editState.containers[col]) editState.containers[col] = {};
+                    editState.containers[col].berat = val;
+                });
+            });
+        });
+        $$(".edit-tim-porsi", ctx).forEach(inp => {
+            inp.setAttribute("inputmode", "none");
+            inp.setAttribute("readonly", "readonly");
+            let sx, sy;
+            inp.addEventListener("pointerdown", e => {
+                sx = e.clientX;
+                sy = e.clientY;
+            });
+            inp.addEventListener("pointerup", e => {
+                if (
+                    Math.abs(e.clientX - sx) > 8 ||
+                    Math.abs(e.clientY - sy) > 8
+                )
+                    return;
+                e.preventDefault();
+                const col = inp.dataset.col;
+                Numpad.show(inp, val => {
+                    inp.removeAttribute("readonly");
+                    inp.value = fmtPorsi(val);
+                    inp.setAttribute("readonly", "readonly");
+                    if (!editState.containers[col]) editState.containers[col] = {};
+                    editState.containers[col].porsi = val;
                 });
             });
         });
@@ -1923,30 +1830,13 @@ function deleteFromHistory(pid) {
 
 function buildRiwayatItem(p) {
     let total, target, diff, dClass;
-    let sampleMain = "", sampleDiff = "", sampleDiffClass = "";
-    
+    let timTotal = 0;
+
     if (p.sample) {
-        // Sample Mode: hitung raw → stirfried
-        const rawTotal = (p.containers.raw || []).reduce(
-            (s, c) => s + (c.val || 0) * (c.mult || 1),
+        timTotal = LaporanCore.TIM_KEYS.reduce(
+            (s, k) => s + ((p.containers[k] && p.containers[k].berat) || 0),
             0
         );
-        const stirfriedTotal = (p.containers.stirfried || []).reduce(
-            (s, c) => s + (c.val || 0) * (c.mult || 1),
-            0
-        );
-        
-        sampleMain = `${formatNumberForDisplay(rawTotal)} → ${formatNumberForDisplay(stirfriedTotal)}`;
-        
-        if (rawTotal === 0) {
-            sampleDiff = "N/A";
-            sampleDiffClass = "";
-        } else {
-            const diffPercent = ((stirfriedTotal - rawTotal) / rawTotal) * 100;
-            const sign = diffPercent > 0 ? "+" : "";
-            sampleDiff = `${sign}${diffPercent.toFixed(1)}%`;
-            sampleDiffClass = diffPercent > 0 ? "diff-positive" : (diffPercent < 0 ? "diff-negative" : "diff-zero");
-        }
     } else {
         // Single / Split Mode
         total = p.split
@@ -1959,8 +1849,8 @@ function buildRiwayatItem(p) {
         diff = total - target;
         dClass = diff > 0 ? "diff-positive" : diff < 0 ? "diff-negative" : "diff-zero";
     }
-    
-    const meta = p.split ? "Porsi Kecil + Besar" : p.sample ? "Sampel" : "Single";
+
+    const meta = p.split ? "Porsi Kecil + Besar" : p.sample ? "Timbangan" : "Single";
     const targetText = !p.sample ? `· Target ${formatNumberForDisplay(target)}` : "";
     
     return `<div class="riwayat-item" data-rid="${p.id}">
@@ -1974,8 +1864,7 @@ function buildRiwayatItem(p) {
         <div style="text-align:right">
           ${
               p.sample
-                  ? `<div class="riwayat-total">${sampleMain}</div>
-                     <div style="font-size:11px;font-family:var(--mono)" class="${sampleDiffClass}">${sampleDiff}</div>`
+                  ? `<div class="riwayat-total">${fmtBerat(timTotal)} kg</div>`
                   : `<div class="riwayat-total">${formatNumberForDisplay(total)}</div>
                      <div style="font-size:11px;font-family:var(--mono)" class="${dClass}">${diff >= 0 ? "+" + formatNumberForDisplay(diff) : formatNumberForDisplay(diff)}</div>`
           }
@@ -2272,14 +2161,6 @@ applyPanelSizes();
     });
 });
 
-// Inisialisasi warna sampel dari localStorage
-const raw = localStorage.getItem("jp_sample_raw") || "#3fb950";
-const soaked = localStorage.getItem("jp_sample_soaked") || "#d29922";
-const stirfried = localStorage.getItem("jp_sample_stirfried") || "#388bfd";
-applySampleColorSetting("raw", raw);
-applySampleColorSetting("soaked", soaked);
-applySampleColorSetting("stirfried", stirfried);
-
 function applyColSetting(col, hex) {
     const key = col === "kecil" ? "jp_col_kecil" : "jp_col_besar";
     if (!/^#[0-9a-fA-F]{6}$/.test(hex)) return;
@@ -2322,123 +2203,6 @@ $$(".color-swatch").forEach(btn =>
             applyColSetting(col, v);
         }
     });
-});
-
-// Warna Sampel Mode
-const rawColor = localStorage.getItem("jp_sample_raw") || "#3fb950";
-const soakedColor = localStorage.getItem("jp_sample_soaked") || "#d29922";
-const stirfriedColor = localStorage.getItem("jp_sample_stirfried") || "#388bfd";
-$("#sampleRawPicker").value = rawColor;
-$("#sampleRawHex").value = rawColor;
-$("#sampleSoakedPicker").value = soakedColor;
-$("#sampleSoakedHex").value = soakedColor;
-$("#sampleStirfriedPicker").value = stirfriedColor;
-$("#sampleStirfriedHex").value = stirfriedColor;
-// Tandai swatch aktif
-$$('.color-swatch[data-col="sample-raw"]').forEach(s =>
-    s.classList.toggle("active", s.dataset.hex === rawColor)
-);
-$$('.color-swatch[data-col="sample-soaked"]').forEach(s =>
-    s.classList.toggle("active", s.dataset.hex === soakedColor)
-);
-$$('.color-swatch[data-col="sample-stirfried"]').forEach(s =>
-    s.classList.toggle("active", s.dataset.hex === stirfriedColor)
-);
-
-function applySampleColorSetting(type, hex) {
-    if (!/^#[0-9a-fA-F]{6}$/.test(hex)) return;
-    localStorage.setItem(`jp_sample_${type}`, hex);
-    // Update CSS variable
-    const isLight = document.documentElement.classList.contains("light");
-    let bgColor;
-    if (type === "raw") {
-        document.documentElement.style.setProperty("--sample-raw", hex);
-        bgColor = isLight ? `${hex}20` : `${hex}14`;
-        document.documentElement.style.setProperty("--sample-raw-bg", bgColor);
-        $$('.color-swatch[data-col="sample-raw"]').forEach(s =>
-            s.classList.toggle("active", s.dataset.hex === hex)
-        );
-        $("#sampleRawPicker").value = hex;
-        $("#sampleRawHex").value = hex;
-    } else if (type === "soaked") {
-        document.documentElement.style.setProperty("--sample-soaked", hex);
-        bgColor = isLight ? `${hex}20` : `${hex}14`;
-        document.documentElement.style.setProperty(
-            "--sample-soaked-bg",
-            bgColor
-        );
-        $$('.color-swatch[data-col="sample-soaked"]').forEach(s =>
-            s.classList.toggle("active", s.dataset.hex === hex)
-        );
-        $("#sampleSoakedPicker").value = hex;
-        $("#sampleSoakedHex").value = hex;
-    } else if (type === "stirfried") {
-        document.documentElement.style.setProperty("--sample-stirfried", hex);
-        bgColor = isLight ? `${hex}20` : `${hex}14`;
-        document.documentElement.style.setProperty(
-            "--sample-stirfried-bg",
-            bgColor
-        );
-        $$('.color-swatch[data-col="sample-stirfried"]').forEach(s =>
-            s.classList.toggle("active", s.dataset.hex === hex)
-        );
-        $("#sampleStirfriedPicker").value = hex;
-        $("#sampleStirfriedHex").value = hex;
-    }
-}
-
-// Event untuk sampel mode
-$$('.color-swatch[data-col="sample-raw"]').forEach(btn =>
-    btn.addEventListener("click", () =>
-        applySampleColorSetting("raw", btn.dataset.hex)
-    )
-);
-$$('.color-swatch[data-col="sample-soaked"]').forEach(btn =>
-    btn.addEventListener("click", () =>
-        applySampleColorSetting("soaked", btn.dataset.hex)
-    )
-);
-$$('.color-swatch[data-col="sample-stirfried"]').forEach(btn =>
-    btn.addEventListener("click", () =>
-        applySampleColorSetting("stirfried", btn.dataset.hex)
-    )
-);
-
-$("#sampleRawPicker").addEventListener("input", () => {
-    const v = $("#sampleRawPicker").value;
-    $("#sampleRawHex").value = v;
-    applySampleColorSetting("raw", v);
-});
-$("#sampleRawHex").addEventListener("change", () => {
-    const v = $("#sampleRawHex").value.trim();
-    if (/^#[0-9a-fA-F]{6}$/.test(v)) {
-        $("#sampleRawPicker").value = v;
-        applySampleColorSetting("raw", v);
-    }
-});
-$("#sampleSoakedPicker").addEventListener("input", () => {
-    const v = $("#sampleSoakedPicker").value;
-    $("#sampleSoakedHex").value = v;
-    applySampleColorSetting("soaked", v);
-});
-$("#sampleSoakedHex").addEventListener("change", () => {
-    const v = $("#sampleSoakedHex").value.trim();
-    if (/^#[0-9a-fA-F]{6}$/.test(v)) {
-        $("#sampleSoakedPicker").value = v;
-        applySampleColorSetting("soaked", v);
-    }
-});
-$("#sampleStirfriedPicker").addEventListener("input", () => {
-    const v = $("#sampleStirfriedPicker").value;
-    $("#sampleStirfriedHex").value = v;
-    applySampleColorSetting("stirfried", v);
-});
-$("#sampleStirfriedHex").addEventListener("change", () => {
-    const v = $("#sampleStirfriedHex").value.trim();
-    if (/^#[0-9a-fA-F]{6}$/.test(v)) {
-        $("#sampleStirfriedPicker").value = v;
-        applySampleColorSetting("stirfried", v);
-    }
 });
 
 $("#btnSettingsBatal").addEventListener("click", () =>
