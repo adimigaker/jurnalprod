@@ -2612,8 +2612,7 @@ function saveCalcHistory() {
 }
 
 function evaluateExpression(expr) {
-    // expr sudah dalam format internal (titik, *, /)
-    let sanitized = expr.replace(/%/g, "");  // Hapus % jika ada
+    let sanitized = expr.replace(/,/g, ".").replace(/%/g, "");
     
     if (!/^[0-9+\-*/.()\s]+$/.test(sanitized)) return "Error";
     
@@ -2626,33 +2625,6 @@ function evaluateExpression(expr) {
     } catch (e) {
         return "Error";
     }
-}
-
-function getLivePreview(expr) {
-    if (!expr || expr === "0" || expr === "Error") return "";
-    
-    // expr sudah dalam format internal (titik, *, /)
-    let evalExpr = expr.replace(/%/g, "");
-    
-    const lastChar = evalExpr.slice(-1);
-    if (["+", "-", "*", "/"].includes(lastChar)) {
-        evalExpr = evalExpr.slice(0, -1);
-    }
-    
-    if (!evalExpr) return "";
-    
-    if (!/^[0-9+\-*/.()\s]+$/.test(evalExpr)) return "";
-    
-    try {
-        const result = Function(`"use strict"; return (${evalExpr})`)();
-        if (typeof result === "number" && isFinite(result)) {
-            let formatted = Math.round(result * 1e6) / 1e6;
-            return String(formatted).replace(/\./g, ",");  // ⬅️ Hasil display pakai koma
-        }
-    } catch (e) {
-        return "";
-    }
-    return "";
 }
 
 function addCalcToHistory(expr, result) {
@@ -2818,7 +2790,14 @@ function handleCalcClick(e) {
         if (calcExpression === "0" || calcExpression === "Error") {
             calcExpression = val;
         } else {
-            calcExpression += val;
+            const lastChar = calcExpression.slice(-1);
+            const prevChar = calcExpression.length > 1 ? calcExpression.slice(-2, -1) : "";
+            // Prevent leading zero: "0" di awal angka diganti, bukan ditimpa
+            if (lastChar === "0" && (prevChar === "" || "+-*/%(".includes(prevChar))) {
+                calcExpression = calcExpression.slice(0, -1) + val;
+            } else {
+                calcExpression += val;
+            }
         }
         updateCalcDisplay();
         return;
@@ -2950,9 +2929,10 @@ if (action === "percent") {
         if (result !== "Error") {
             calcResult = String(result).replace(".", ",");
             addCalcToHistory(calcExpression, calcResult);
+            calcExpression = String(result);
             const historyList = document.getElementById("calcHistoryList");
             if (historyList) {
-                const displayExpr = calcExpression.replace(/\*/g, "×").replace(/\//g, "÷");
+                const displayExpr = calcResult;
                 const newItem = document.createElement("div");
                 newItem.className = "calc-history-item";
                 newItem.dataset.expr = calcExpression;
@@ -2965,7 +2945,6 @@ if (action === "percent") {
                 const scrollArea = document.getElementById("calcScrollArea");
                 if (scrollArea) scrollArea.scrollTop = scrollArea.scrollHeight;
                 
-                // Jika sebelumnya tidak ada history, tombol clear belum muncul. Render ulang agar tombol muncul.
                 if (calcHistory.length === 1) {
                     renderKalkulator();
                     return;
