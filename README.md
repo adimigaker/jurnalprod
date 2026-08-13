@@ -1,2 +1,2 @@
 # jurnalproduksi
-Jurnal Produksi Tim Pengolahan
+Jurnal Produksi Harian

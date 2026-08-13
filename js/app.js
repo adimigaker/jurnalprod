@@ -95,37 +95,39 @@ const Sync = {
     },
 
     toRow(p) {
-        return {
-            id: p.id,
-            name: p.name,
-            date: p.date,
-            split: p.split || false,
-            sample: p.sample || false,
-            order_idx: p.order || 0,
-            target_single: p.targetSingle || 0,
-            target_besar: p.targetBesar || 0,
-            target_kecil: p.targetKecil || 0,
-            containers: p.containers,
-            unit: p.unit || "pcs",
-            note: p.note || ""
-        };
+    return {
+        id: p.id,
+        name: p.name,
+        date: p.date,
+        split: p.split || false,
+        sample: p.sample || false,
+        order_idx: p.order || 0,
+        target_single: p.targetSingle || 0,
+        target_besar: p.targetBesar || 0,
+        target_kecil: p.targetKecil || 0,
+        containers: p.containers,
+        unit: p.unit || "pcs",
+        note: p.note || "",
+        sample_labels: p.sampleLabels || null   // ✅ tambahkan
+      };
     },
 
     fromRow(r) {
-        return {
-            id: r.id,
-            name: r.name,
-            date: r.date,
-            split: r.split || false,
-            sample: r.sample || false,
-            order: r.order_idx || 0,
-            targetSingle: r.target_single || 0,
-            targetBesar: r.target_besar || 0,
-            targetKecil: r.target_kecil || 0,
-            containers: r.containers,
-            unit: r.unit || "pcs",
-            note: r.note || ""
-        };
+    return {
+        id: r.id,
+        name: r.name,
+        date: r.date,
+        split: r.split || false,
+        sample: r.sample || false,
+        order: r.order_idx || 0,
+        targetSingle: r.target_single || 0,
+        targetBesar: r.target_besar || 0,
+        targetKecil: r.target_kecil || 0,
+        containers: r.containers,
+        unit: r.unit || "pcs",
+        note: r.note || "",
+        sampleLabels: r.sample_labels || null   // ✅ tambahkan
+     };
     },
 
     async pull() {
@@ -670,49 +672,68 @@ function renderProductCard(p) {
     };
 
     const renderSampleCol = () => {
-        const renderRow = (label, colKey, containers, sampleClass) => {
-            const rows = containers
-                .map((c, i) => {
-                    const result = (c.val || 0) * (c.mult || 1);
-                    return `<div class="container-row ${sampleClass}">
-                <div class="container-index">${i + 1}</div>
-                <div class="container-row-top">
-                    <input class="container-input" type="text" value="${formatNumberForDisplay(c.val)}"
-                        data-pid="${p.id}" data-col="${colKey}" data-cidx="${i}" placeholder="0" />
-                </div>
-                <div class="container-row-bottom">
-                    <div class="mult-stepper">
-                        <button class="mult-step-btn mult-minus" data-pid="${p.id}" data-col="${colKey}" data-cidx="${i}">−</button>
-                        <input class="mult-step-input" type="text" value="${c.mult}" min="1" max="999"
-                            data-pid="${p.id}" data-col="${colKey}" data-cidx="${i}" />
-                        <button class="mult-step-btn mult-plus" data-pid="${p.id}" data-col="${colKey}" data-cidx="${i}">+</button>
+    // Pastikan sampleLabels ada, jika tidak buat default
+    if (!p.sampleLabels) {
+        p.sampleLabels = {
+            raw: "Berat Mentah",
+            soaked: "Berat Proses",
+            stirfried: "Berat Jadi"
+        };
+    }
+    
+    const renderRow = (colKey, containers, sampleClass) => {
+        const label = p.sampleLabels[colKey] || colKey;
+        const rows = containers
+            .map((c, i) => {
+                const result = (c.val || 0) * (c.mult || 1);
+                return `<div class="container-row ${sampleClass}">
+                    <div class="container-index">${i + 1}</div>
+                    <div class="container-row-top">
+                        <input class="container-input" type="text" value="${formatNumberForDisplay(c.val)}"
+                            data-pid="${p.id}" data-col="${colKey}" data-cidx="${i}" placeholder="0" />
                     </div>
-                </div>
-                <div class="container-row-result">
-                    <button class="remove-btn" data-pid="${p.id}" data-col="${colKey}" data-cidx="${i}">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                    <div class="container-row-bottom">
+                        <div class="mult-stepper">
+                            <button class="mult-step-btn mult-minus" data-pid="${p.id}" data-col="${colKey}" data-cidx="${i}">−</button>
+                            <input class="mult-step-input" type="text" value="${c.mult}" min="1" max="999"
+                                data-pid="${p.id}" data-col="${colKey}" data-cidx="${i}" />
+                            <button class="mult-step-btn mult-plus" data-pid="${p.id}" data-col="${colKey}" data-cidx="${i}">+</button>
+                        </div>
+                    </div>
+                    <div class="container-row-result">
+                        <button class="remove-btn" data-pid="${p.id}" data-col="${colKey}" data-cidx="${i}">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                        </button>
+                        <div class="result-group">
+                            <span style="font-size:12px;color:var(--text-muted);margin-right:6px">=</span>
+                            <span class="mult-result" data-res="${p.id}-${colKey}-${i}">${formatNumberForDisplay(result)}</span>
+                            <span style="font-size:12px;color:var(--text-muted);margin-left:4px">${p.unit || "kg"}</span>
+                        </div>
+                    </div>
+                </div>`;
+            })
+            .join("");
+            
+        return `<div class="col-section">
+            <div class="col-label">
+                <div class="col-label-left">
+                   <span class="sample-label-text">${label}</span>
+                    <button class="edit-target-btn" data-pid="${p.id}" data-col="${colKey}" title="Edit label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                     </button>
-                    <div class="result-group">
-                        <span style="font-size:12px;color:var(--text-muted);margin-right:6px">=</span>
-                        <span class="mult-result" data-res="${p.id}-${colKey}-${i}">${formatNumberForDisplay(result)}</span>
-                        <span style="font-size:12px;color:var(--text-muted);margin-left:4px">${p.unit || "kg"}</span>
-                    </div>
                 </div>
-            </div>`;
-                })
-                .join("");
-            return `<div class="col-section">
-            <div class="col-label"><span>${label}</span></div>
+            </div>
             <div class="container-list" data-pid="${p.id}" data-col="${colKey}">${rows}</div>
             <button class="add-container-btn" data-pid="${p.id}" data-col="${colKey}">Tambah</button>
         </div>`;
-        };
-        return `<div class="sample-vertical">
-        ${renderRow("Berat Mentah", "raw", p.containers.raw, "sample-raw")}
-        ${renderRow("Berat Proses", "soaked", p.containers.soaked, "sample-soaked")}
-        ${renderRow("Berat Jadi", "stirfried", p.containers.stirfried, "sample-stirfried")}
-    </div>`;
     };
+    
+    return `<div class="sample-vertical">
+        ${renderRow("raw", p.containers.raw, "sample-raw")}
+        ${renderRow("soaked", p.containers.soaked, "sample-soaked")}
+        ${renderRow("stirfried", p.containers.stirfried, "sample-stirfried")}
+    </div>`;
+};
 
     const summaryHTML = renderSummary(p);
     let headerTotal = 0,
@@ -755,6 +776,36 @@ function renderProductCard(p) {
                 ? `+${formatNumberForDisplay(diff)}`
                 : `${formatNumberForDisplay(diff)}`;
     }
+    
+    // Untuk Sample Mode: hitung berat mentah dan berat jadi (dengan label kustom)
+let sampleHeaderMain = "";
+let sampleHeaderDiff = "";
+let sampleDiffClass = "";
+if (isSample) {
+    const rawTotal = (p.containers.raw || []).reduce(
+        (s, c) => s + (c.val || 0) * (c.mult || 1),
+        0
+    );
+    const stirfriedTotal = (p.containers.stirfried || []).reduce(
+        (s, c) => s + (c.val || 0) * (c.mult || 1),
+        0
+    );
+    
+    // Tampilan collapsed: hanya angka → angka (tanpa label)
+    sampleHeaderMain = `${formatNumberForDisplay(rawTotal)} → ${formatNumberForDisplay(stirfriedTotal)}`;
+    
+    // Hitung persentase perubahan
+    if (rawTotal === 0) {
+        sampleHeaderDiff = "N/A";
+        sampleDiffClass = "";
+    } else {
+        const diffPercent = ((stirfriedTotal - rawTotal) / rawTotal) * 100;
+        const sign = diffPercent > 0 ? "+" : "";
+        sampleHeaderDiff = `${sign}${diffPercent.toFixed(1)}%`;
+        sampleDiffClass = diffPercent > 0 ? "diff-positive" : (diffPercent < 0 ? "diff-negative" : "diff-zero");
+    }
+}
+
     const meta = isSplit
         ? "Porsi Kecil + Besar"
         : isSample
@@ -788,8 +839,9 @@ function renderProductCard(p) {
             ${
                 !isSample
                     ? `<div class="riwayat-total card-header-total">${formatNumberForDisplay(headerTotal)}</div>
-            <div style="font-size:11px;font-family:var(--mono)" class="${dClass} card-header-diff">${dStr}</div>`
-                    : ""
+                       <div style="font-size:11px;font-family:var(--mono)" class="${dClass} card-header-diff">${dStr}</div>`
+                    : `<div class="riwayat-total card-header-total">${sampleHeaderMain}</div>
+                       <div style="font-size:11px;font-family:var(--mono)" class="${sampleDiffClass} card-header-diff">${sampleHeaderDiff}</div>`
             }
           </div>
           <button class="delete-product-btn" data-pid="${p.id}" title="Hapus Produk">
@@ -815,55 +867,61 @@ function renderSummary(p) {
     const unit = p.unit || (isSample ? "kg" : "pcs");
 
     if (isSample) {
-        const rawTotal = (p.containers.raw || []).reduce(
-            (s, c) => s + (c.val || 0) * (c.mult || 1),
-            0
-        );
-        const soakedTotal = (p.containers.soaked || []).reduce(
-            (s, c) => s + (c.val || 0) * (c.mult || 1),
-            0
-        );
-        const stirfriedTotal = (p.containers.stirfried || []).reduce(
-            (s, c) => s + (c.val || 0) * (c.mult || 1),
-            0
-        );
-        const calcPercent = (awal, akhir) => {
-            if (awal === 0) return { text: "N/A", class: "" };
-            const diff = akhir - awal;
-            const percent = (diff / awal) * 100;
-            const sign = diff > 0 ? "+" : "";
-            return {
-                text: `${sign}${percent.toFixed(1)}%`,
-                class:
-                    diff > 0
-                        ? "diff-positive"
-                        : diff < 0
-                          ? "diff-negative"
-                          : "diff-zero"
-            };
+    const rawTotal = (p.containers.raw || []).reduce(
+        (s, c) => s + (c.val || 0) * (c.mult || 1),
+        0
+    );
+    const soakedTotal = (p.containers.soaked || []).reduce(
+        (s, c) => s + (c.val || 0) * (c.mult || 1),
+        0
+    );
+    const stirfriedTotal = (p.containers.stirfried || []).reduce(
+        (s, c) => s + (c.val || 0) * (c.mult || 1),
+        0
+    );
+    
+    // Gunakan label kustom
+    const labels = p.sampleLabels || {
+        raw: "Berat Mentah",
+        soaked: "Berat Proses",
+        stirfried: "Berat Jadi"
+    };
+    
+    const calcPercent = (awal, akhir) => {
+        if (awal === 0) return { text: "N/A", class: "" };
+        const diff = akhir - awal;
+        const percent = (diff / awal) * 100;
+        const sign = diff > 0 ? "+" : "";
+        return {
+            text: `${sign}${percent.toFixed(1)}%`,
+            class: diff > 0 ? "diff-positive" : diff < 0 ? "diff-negative" : "diff-zero"
         };
-        const rawToSoaked = calcPercent(rawTotal, soakedTotal);
-        const soakedToStir = calcPercent(soakedTotal, stirfriedTotal);
-        const rawToStir = calcPercent(rawTotal, stirfriedTotal);
-        let noteHtml = "";
-        if (p.note) {
-            noteHtml = `<div class="summary-note">
-                <div class="summary-note-label">📝 Catatan:</div>
-                <div class="summary-note-text">${p.note.replace(/\n/g, "<br>")}</div>
-            </div>`;
-        }
-        return `<div class="summary-box">
-            <div class="summary-title">Ringkasan Sampel</div>
-            <div class="summary-grid">
-                <div class="summary-row"><span>Berat Mentah</span><span>${formatNumberForDisplay(rawTotal)} ${unit}</span></div>
-                <div class="summary-row"><span>Berat Proses</span><span>${formatNumberForDisplay(soakedTotal)} ${unit} <span class="${rawToSoaked.class}">(${rawToSoaked.text})</span></span></div>
-                <div class="summary-row"><span>Berat Jadi</span><span>${formatNumberForDisplay(stirfriedTotal)} ${unit} <span class="${soakedToStir.class}">(${soakedToStir.text})</span></span></div>
-                <div class="summary-divider"></div>
-                <div class="summary-row"><span>Perubahan Mentah → Jadi</span><span class="${rawToStir.class}">${rawToStir.text}</span></div>
-                ${noteHtml}
-            </div>
+    };
+    
+    const rawToSoaked = calcPercent(rawTotal, soakedTotal);
+    const soakedToStir = calcPercent(soakedTotal, stirfriedTotal);
+    const rawToStir = calcPercent(rawTotal, stirfriedTotal);
+    
+    let noteHtml = "";
+    if (p.note) {
+        noteHtml = `<div class="summary-note">
+            <div class="summary-note-label">📝 Catatan:</div>
+            <div class="summary-note-text">${p.note.replace(/\n/g, "<br>")}</div>
         </div>`;
     }
+    
+    return `<div class="summary-box">
+        <div class="summary-title">Ringkasan Sampel</div>
+        <div class="summary-grid">
+            <div class="summary-row"><span>${labels.raw}</span><span>${formatNumberForDisplay(rawTotal)} ${unit}</span></div>
+            <div class="summary-row"><span>${labels.soaked}</span><span>${formatNumberForDisplay(soakedTotal)} ${unit} <span class="${rawToSoaked.class}">(${rawToSoaked.text})</span></span></div>
+            <div class="summary-row"><span>${labels.stirfried}</span><span>${formatNumberForDisplay(stirfriedTotal)} ${unit} <span class="${soakedToStir.class}">(${soakedToStir.text})</span></span></div>
+            <div class="summary-divider"></div>
+            <div class="summary-row"><span>Perubahan ${labels.raw} → ${labels.stirfried}</span><span class="${rawToStir.class}">${rawToStir.text}</span></div>
+            ${noteHtml}
+        </div>
+    </div>`;
+}
 
     const diffLabel = (diff, target) => {
         if (diff === 0) return { text: "Sesuai Target", cls: "diff-zero" };
@@ -1136,6 +1194,79 @@ function attachCardEvents(ctx) {
             }
         });
     });
+    
+    // Handler untuk edit label sample
+// Handler untuk edit label sample (sekarang menggunakan class .edit-target-btn juga)
+$$(".edit-target-btn", ctx).forEach(btn => {
+    // Hanya proses jika ini adalah tombol edit label sample (bukan target)
+    // Kita bisa cek dari konteks: jika tidak ada badge target di sebelahnya
+    const parentLabel = btn.closest(".col-label");
+    const hasTargetBadge = parentLabel && parentLabel.querySelector(".target-badge");
+    
+    if (!hasTargetBadge) {
+        btn.addEventListener("click", e => {
+            e.stopPropagation();
+            const pid = btn.dataset.pid;
+            const col = btn.dataset.col;
+            
+            const labelSpan = btn.parentElement.querySelector(".sample-label-text");
+            if (!labelSpan) return;
+            
+            const currentLabel = labelSpan.textContent;
+            
+            // Buat input untuk edit
+            const input = document.createElement("input");
+            input.type = "text";
+            input.value = currentLabel;
+            input.className = "sample-label-input";
+            input.style.cssText = `
+                font-size: 11px;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.6px;
+                background: var(--bg-input);
+                border: 1px solid var(--border-focus);
+                border-radius: 4px;
+                color: var(--text);
+                padding: 2px 4px;
+                width: 100%;
+                max-width: 150px;
+            `;
+            
+            // Ganti span dengan input
+            labelSpan.replaceWith(input);
+            input.focus();
+            input.select();
+            
+            // Simpan saat blur atau Enter
+            const saveLabel = () => {
+                const newLabel = input.value.trim() || currentLabel;
+                const newSpan = document.createElement("span");
+                newSpan.className = "sample-label-text";
+                newSpan.textContent = newLabel;
+                input.replaceWith(newSpan);
+                
+                // Simpan ke database
+                const data = DB.get();
+                const p = data.find(x => x.id === pid);
+                if (p) {
+                    if (!p.sampleLabels) p.sampleLabels = {};
+                    p.sampleLabels[col] = newLabel;
+                    saveAndSync(pid, data);
+                    refreshSummary(pid);
+                }
+            };
+            
+            input.addEventListener("blur", saveLabel);
+            input.addEventListener("keydown", e => {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    saveLabel();
+                }
+            });
+        });
+    }
+});
 
     $$(".delete-product-btn", ctx).forEach(btn => {
         btn.addEventListener("click", e => {
@@ -1391,6 +1522,16 @@ $("#btnOk").addEventListener("click", () => {
         note: note
     };
 
+    // Tambahkan sampleLabels jika Sample Mode
+    if (isSample) {
+        product.sampleLabels = {
+            raw: "Berat Mentah",
+            soaked: "Berat Proses",
+            stirfried: "Berat Jadi"
+        };
+    }
+
+    // Simpan produk
     DB.addProduct(product);
     closeModal();
     renderBeranda();
@@ -1476,47 +1617,63 @@ function renderEditCol(label, colKey, target, containers, accentColor = null) {
 
 function renderEditSampleCol() {
     const p = editState;
-    const renderRow = (label, colKey, containers, sampleClass) => {
+    
+    // Pastikan sampleLabels ada
+    if (!p.sampleLabels) {
+        p.sampleLabels = {
+            raw: "Berat Mentah",
+            soaked: "Berat Proses",
+            stirfried: "Berat Jadi"
+        };
+    }
+    
+    const renderRow = (colKey, containers, sampleClass) => {
+        const label = p.sampleLabels[colKey] || colKey;
         const rows = containers
             .map((c, i) => {
                 const result = (c.val || 0) * (c.mult || 1);
                 return `<div class="container-row ${sampleClass}">
-                <div class="container-index">${i + 1}</div>
-                <div class="container-row-top">
-                    <input class="container-input edit-val-input" type="text" value="${formatNumberForDisplay(c.val)}"
-                        data-col="${colKey}" data-cidx="${i}" placeholder="0" />
-                </div>
-                <div class="container-row-bottom">
-                    <div class="mult-stepper">
-                        <button class="mult-step-btn edit-mult-minus" data-col="${colKey}" data-cidx="${i}">−</button>
-                        <input class="mult-step-input edit-mult-input" type="text" value="${c.mult}"
-                            min="1" max="999" data-col="${colKey}" data-cidx="${i}" />
-                        <button class="mult-step-btn edit-mult-plus" data-col="${colKey}" data-cidx="${i}">+</button>
+                    <div class="container-index">${i + 1}</div>
+                    <div class="container-row-top">
+                        <input class="container-input edit-val-input" type="text" value="${formatNumberForDisplay(c.val)}"
+                            data-col="${colKey}" data-cidx="${i}" placeholder="0" />
                     </div>
-                </div>
-                <div class="container-row-result">
-                    <button class="remove-btn edit-remove-btn" data-col="${colKey}" data-cidx="${i}">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
-                    </button>
-                    <div class="result-group">
-                        <span style="font-size:12px;color:var(--text-muted);margin-right:6px">=</span>
-                        <span class="mult-result" id="editres-${colKey}-${i}">${formatNumberForDisplay(result)}</span>
-                        <span style="font-size:12px;color:var(--text-muted);margin-left:4px">${p.unit || "kg"}</span>
+                    <div class="container-row-bottom">
+                        <div class="mult-stepper">
+                            <button class="mult-step-btn edit-mult-minus" data-col="${colKey}" data-cidx="${i}">−</button>
+                            <input class="mult-step-input edit-mult-input" type="text" value="${c.mult}"
+                                min="1" max="999" data-col="${colKey}" data-cidx="${i}" />
+                            <button class="mult-step-btn edit-mult-plus" data-col="${colKey}" data-cidx="${i}">+</button>
+                        </div>
                     </div>
-                </div>
-            </div>`;
+                    <div class="container-row-result">
+                        <button class="remove-btn edit-remove-btn" data-col="${colKey}" data-cidx="${i}">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                        </button>
+                        <div class="result-group">
+                            <span style="font-size:12px;color:var(--text-muted);margin-right:6px">=</span>
+                            <span class="mult-result" id="editres-${colKey}-${i}">${formatNumberForDisplay(result)}</span>
+                            <span style="font-size:12px;color:var(--text-muted);margin-left:4px">${p.unit || "kg"}</span>
+                        </div>
+                    </div>
+                </div>`;
             })
             .join("");
+            
         return `<div class="col-section">
-            <div class="col-label"><span>${label}</span></div>
+            <div class="col-label">
+                <input type="text" class="edit-sample-label-field" data-col="${colKey}" 
+                    value="${label}" style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.6px;background:var(--bg-input);border:1px solid var(--border);border-radius:4px;color:var(--text);padding:2px 4px;width:100%;max-width:150px;" />
+            </div>
             <div class="container-list" id="editlist-${colKey}">${rows}</div>
             <button class="add-container-btn edit-add-btn" data-col="${colKey}">Tambah</button>
         </div>`;
     };
+    
     return `<div class="sample-vertical">
-        ${renderRow("Berat Mentah", "raw", p.containers.raw, "sample-raw")}
-        ${renderRow("Berat Proses", "soaked", p.containers.soaked, "sample-soaked")}
-        ${renderRow("Berat Jadi", "stirfried", p.containers.stirfried, "sample-stirfried")}
+        ${renderRow("raw", p.containers.raw, "sample-raw")}
+        ${renderRow("soaked", p.containers.soaked, "sample-soaked")}
+        ${renderRow("stirfried", p.containers.stirfried, "sample-stirfried")}
     </div>`;
 }
 
@@ -1620,6 +1777,17 @@ function attachEditContainerEvents(ctx) {
             renderEditContainerArea();
         });
     });
+    // Handler untuk edit label di modal edit
+$$(".edit-sample-label-field", ctx).forEach(inp => {
+    inp.addEventListener("input", () => {
+        const col = inp.dataset.col;
+        const newLabel = inp.value.trim();
+        if (newLabel) {
+            if (!editState.sampleLabels) editState.sampleLabels = {};
+            editState.sampleLabels[col] = newLabel;
+        }
+    });
+});
     $$(".edit-target-field", ctx).forEach(inp => {
         inp.addEventListener("input", () => {
             const col = inp.dataset.col;
@@ -1756,33 +1924,47 @@ function deleteFromHistory(pid) {
 }
 
 function buildRiwayatItem(p) {
-    const total = p.split
-        ? (p.containers.besar || []).reduce(
-              (s, c) => s + (c.val || 0) * (c.mult || 1),
-              0
-          ) +
-          (p.containers.kecil || []).reduce(
-              (s, c) => s + (c.val || 0) * (c.mult || 1),
-              0
-          )
-        : (p.containers.single || []).reduce(
-              (s, c) => s + (c.val || 0) * (c.mult || 1),
-              0
-          );
-    const target = p.split
-        ? (p.targetBesar || 0) + (p.targetKecil || 0)
-        : p.targetSingle || 0;
-    const diff = total - target;
-    const dClass =
-        diff > 0 ? "diff-positive" : diff < 0 ? "diff-negative" : "diff-zero";
-    const meta = p.split
-        ? "Porsi Kecil + Besar"
-        : p.sample
-          ? "Sampel"
-          : "Single";
-    const targetText = !p.sample
-        ? `· Target ${formatNumberForDisplay(target)}`
-        : "";
+    let total, target, diff, dClass;
+    let sampleMain = "", sampleDiff = "", sampleDiffClass = "";
+    
+    if (p.sample) {
+        // Sample Mode: hitung raw → stirfried
+        const rawTotal = (p.containers.raw || []).reduce(
+            (s, c) => s + (c.val || 0) * (c.mult || 1),
+            0
+        );
+        const stirfriedTotal = (p.containers.stirfried || []).reduce(
+            (s, c) => s + (c.val || 0) * (c.mult || 1),
+            0
+        );
+        
+        sampleMain = `${formatNumberForDisplay(rawTotal)} → ${formatNumberForDisplay(stirfriedTotal)}`;
+        
+        if (rawTotal === 0) {
+            sampleDiff = "N/A";
+            sampleDiffClass = "";
+        } else {
+            const diffPercent = ((stirfriedTotal - rawTotal) / rawTotal) * 100;
+            const sign = diffPercent > 0 ? "+" : "";
+            sampleDiff = `${sign}${diffPercent.toFixed(1)}%`;
+            sampleDiffClass = diffPercent > 0 ? "diff-positive" : (diffPercent < 0 ? "diff-negative" : "diff-zero");
+        }
+    } else {
+        // Single / Split Mode
+        total = p.split
+            ? (p.containers.besar || []).reduce((s, c) => s + (c.val || 0) * (c.mult || 1), 0) +
+              (p.containers.kecil || []).reduce((s, c) => s + (c.val || 0) * (c.mult || 1), 0)
+            : (p.containers.single || []).reduce((s, c) => s + (c.val || 0) * (c.mult || 1), 0);
+        target = p.split
+            ? (p.targetBesar || 0) + (p.targetKecil || 0)
+            : p.targetSingle || 0;
+        diff = total - target;
+        dClass = diff > 0 ? "diff-positive" : diff < 0 ? "diff-negative" : "diff-zero";
+    }
+    
+    const meta = p.split ? "Porsi Kecil + Besar" : p.sample ? "Sampel" : "Single";
+    const targetText = !p.sample ? `· Target ${formatNumberForDisplay(target)}` : "";
+    
     return `<div class="riwayat-item" data-rid="${p.id}">
     <div class="drag-handle" title="Seret untuk mengurutkan"><span></span><span></span><span></span></div>
     <div class="riwayat-item-header" style="padding-left:26px">
@@ -1793,10 +1975,11 @@ function buildRiwayatItem(p) {
       <div style="display:flex;align-items:center;gap:6px">
         <div style="text-align:right">
           ${
-              !p.sample
-                  ? `<div class="riwayat-total">${formatNumberForDisplay(total)}</div>
-          <div style="font-size:11px;font-family:var(--mono)" class="${dClass}">${diff >= 0 ? "+" + formatNumberForDisplay(diff) : formatNumberForDisplay(diff)}</div>`
-                  : ""
+              p.sample
+                  ? `<div class="riwayat-total">${sampleMain}</div>
+                     <div style="font-size:11px;font-family:var(--mono)" class="${sampleDiffClass}">${sampleDiff}</div>`
+                  : `<div class="riwayat-total">${formatNumberForDisplay(total)}</div>
+                     <div style="font-size:11px;font-family:var(--mono)" class="${dClass}">${diff >= 0 ? "+" + formatNumberForDisplay(diff) : formatNumberForDisplay(diff)}</div>`
           }
         </div>
         <div class="riwayat-chevron">
@@ -2412,323 +2595,387 @@ function makeSortable(containerEl) {
 }
 
 // ==================== KALKULATOR ====================
-const Calc = (() => {
-    let expr = "",
-        justEq = false;
-    let history = JSON.parse(localStorage.getItem("jp_calc_history") || "[]");
-    const saveHistory = () =>
-        localStorage.setItem("jp_calc_history", JSON.stringify(history));
-    const OPS = ["+", "−", "×", "÷"];
-    const fmtNum = n => {
-        if (n === null || n === undefined || !isFinite(n)) return "Error";
-        return parseFloat(n.toPrecision(12)).toString();
-    };
-    const unclosedParens = () => {
-        let n = 0;
-        for (const ch of expr) {
-            if (ch === "(") n++;
-            else if (ch === ")") n--;
+let calcExpression = "0";
+let calcResult = "";
+let calcHistory = [];
+
+// Load history dari localStorage
+try {
+    const saved = localStorage.getItem("calc_history");
+    if (saved) calcHistory = JSON.parse(saved);
+} catch (e) {
+    calcHistory = [];
+}
+
+function saveCalcHistory() {
+    localStorage.setItem("calc_history", JSON.stringify(calcHistory));
+}
+
+function evaluateExpression(expr) {
+    // expr sudah dalam format internal (titik, *, /)
+    let sanitized = expr.replace(/%/g, "");  // Hapus % jika ada
+    
+    if (!/^[0-9+\-*/.()\s]+$/.test(sanitized)) return "Error";
+    
+    try {
+        const result = Function(`"use strict"; return (${sanitized})`)();
+        if (typeof result === "number" && isFinite(result)) {
+            return Math.round(result * 1e6) / 1e6;
         }
-        return n;
-    };
-    function tokenize(s) {
-        const tokens = [];
-        let num = "";
-        for (let i = 0; i < s.length; i++) {
-            const ch = s[i];
-            if ("0123456789.".includes(ch)) {
-                num += ch;
-            } else {
-                if (num) {
-                    tokens.push(parseFloat(num));
-                    num = "";
-                }
-                if (OPS.includes(ch) || ch === "(" || ch === ")")
-                    tokens.push(ch);
-            }
-        }
-        if (num) tokens.push(parseFloat(num));
-        return tokens;
+        return "Error";
+    } catch (e) {
+        return "Error";
     }
-    function evaluate(s) {
-        const tokens = tokenize(s);
-        const prec = { "+": 1, "−": 1, "×": 2, "÷": 2 };
-        const out = [],
-            ops = [];
-        const applyOp = () => {
-            const op = ops.pop(),
-                b = out.pop(),
-                a = out.pop();
-            if (op === "+") out.push(a + b);
-            else if (op === "−") out.push(a - b);
-            else if (op === "×") out.push(a * b);
-            else if (op === "÷") {
-                if (b === 0) throw new Error("div0");
-                out.push(a / b);
-            }
-        };
-        for (const tok of tokens) {
-            if (typeof tok === "number") {
-                out.push(tok);
-            } else if (tok === "(") {
-                ops.push(tok);
-            } else if (tok === ")") {
-                while (ops.length && ops[ops.length - 1] !== "(") applyOp();
-                ops.pop();
-            } else if (OPS.includes(tok)) {
-                while (
-                    ops.length &&
-                    ops[ops.length - 1] !== "(" &&
-                    prec[ops[ops.length - 1]] >= prec[tok]
-                )
-                    applyOp();
-                ops.push(tok);
-            }
-        }
-        while (ops.length) applyOp();
-        return out[0] ?? null;
+}
+
+function getLivePreview(expr) {
+    if (!expr || expr === "0" || expr === "Error") return "";
+    
+    // expr sudah dalam format internal (titik, *, /)
+    let evalExpr = expr.replace(/%/g, "");
+    
+    const lastChar = evalExpr.slice(-1);
+    if (["+", "-", "*", "/"].includes(lastChar)) {
+        evalExpr = evalExpr.slice(0, -1);
     }
-    function tryEval(s) {
-        if (!s) return null;
-        try {
-            const open =
-                (s.match(/\(/g) || []).length - (s.match(/\)/g) || []).length;
-            const closed = s + ")".repeat(Math.max(0, open));
-            const last = closed.trim().slice(-1);
-            if (OPS.includes(last) || last === "(") return null;
-            const res = evaluate(closed);
-            return res !== null && isFinite(res) ? fmtNum(res) : null;
-        } catch {
-            return null;
+    
+    if (!evalExpr) return "";
+    
+    if (!/^[0-9+\-*/.()\s]+$/.test(evalExpr)) return "";
+    
+    try {
+        const result = Function(`"use strict"; return (${evalExpr})`)();
+        if (typeof result === "number" && isFinite(result)) {
+            let formatted = Math.round(result * 1e6) / 1e6;
+            return String(formatted).replace(/\./g, ",");  // ⬅️ Hasil display pakai koma
+        }
+    } catch (e) {
+        return "";
+    }
+    return "";
+}
+
+function addCalcToHistory(expr, result) {
+    if (calcHistory.length > 0) {
+        const last = calcHistory[calcHistory.length - 1];
+        if (last.expr === expr && last.result === result) return;
+    }
+    calcHistory.push({ expr, result: String(result) });
+    if (calcHistory.length > 30) calcHistory.shift();
+    saveCalcHistory();
+}
+
+function clearCalcHistory() {
+    calcHistory = [];
+    saveCalcHistory();
+    if (currentTab === "kalkulator") renderKalkulator();
+}
+
+function updateCalcDisplay() {
+    const exprEl = document.querySelector(".calc-expr");
+    const valEl = document.querySelector(".calc-val");
+    
+    if (exprEl) {
+        // Konversi internal → display
+        let displayExpr = calcExpression
+            .replace(/\*/g, "×")
+            .replace(/\//g, "÷")
+            .replace(/\./g, ",");  // ⬅️ Titik → koma untuk display
+        exprEl.textContent = displayExpr;
+    }
+    
+    if (valEl) {
+        const preview = getLivePreview(calcExpression);
+        valEl.textContent = preview;
+    }
+}
+
+// Fungsi baru untuk live preview
+function getLivePreview(expr) {
+    if (!expr || expr === "0" || expr === "Error") return "";
+    
+    // Hapus % karena sudah tidak ada di ekspresi final
+    let evalExpr = expr.replace(/,/g, ".").replace(/%/g, "");
+    
+    const lastChar = evalExpr.slice(-1);
+    if (["+", "-", "*", "/", "%"].includes(lastChar)) {
+        evalExpr = evalExpr.slice(0, -1);
+    }
+    
+    if (!evalExpr) return "";
+    
+    if (!/^[0-9+\-*/.()\s]+$/.test(evalExpr)) return "";
+    
+    try {
+        const result = Function(`"use strict"; return (${evalExpr})`)();
+        if (typeof result === "number" && isFinite(result)) {
+            let formatted = Math.round(result * 1e6) / 1e6;
+            return String(formatted).replace(/\./g, ",");
+        }
+    } catch (e) {
+        return "";
+    }
+    return "";
+}
+
+function renderKalkulator() {
+    const pg = document.getElementById("page-kalkulator");
+    if (!pg) return;
+
+    const hasHistory = calcHistory.length > 0;
+
+    pg.innerHTML = `
+        <div class="calc-scroll-area" id="calcScrollArea">
+            ${hasHistory ? `
+                <button class="calc-history-clear" id="clearHistoryBtn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    Bersihkan Riwayat
+                </button>
+            ` : ""}
+            <div class="calc-history-list" id="calcHistoryList">
+                ${calcHistory.map(item => {
+                    const displayExpr = item.expr.replace(/\*/g, "×").replace(/\//g, "÷");
+                    return `
+                        <div class="calc-history-item" data-expr="${item.expr}" data-result="${item.result}">
+                            <div class="calc-history-expr">${displayExpr}</div>
+                            <div class="calc-history-result">${item.result}</div>
+                        </div>
+                    `;
+                }).join("")}
+            </div>
+        </div>
+        <div class="calc-fixed-bottom">
+            <div class="calc-display">
+                <div class="calc-expr">${calcExpression.replace(/\*/g, "×").replace(/\//g, "÷")}</div>
+                <div class="calc-val">${calcResult}</div>
+            </div>
+            <div class="calc-grid">
+                <button class="ck ck-clear" data-action="clear">AC</button>
+                <button class="ck" data-action="smartParentheses">( )</button>
+                <button class="ck ck-op" data-action="percent">%</button>
+                <button class="ck ck-op" data-action="operator" data-op="÷">÷</button>
+                
+                <button class="ck" data-action="number" data-val="7">7</button>
+                <button class="ck" data-action="number" data-val="8">8</button>
+                <button class="ck" data-action="number" data-val="9">9</button>
+                <button class="ck ck-op" data-action="operator" data-op="×">×</button>
+                
+                <button class="ck" data-action="number" data-val="4">4</button>
+                <button class="ck" data-action="number" data-val="5">5</button>
+                <button class="ck" data-action="number" data-val="6">6</button>
+                <button class="ck ck-op" data-action="operator" data-op="-">−</button>
+                
+                <button class="ck" data-action="number" data-val="1">1</button>
+                <button class="ck" data-action="number" data-val="2">2</button>
+                <button class="ck" data-action="number" data-val="3">3</button>
+                <button class="ck ck-op" data-action="operator" data-op="+">+</button>
+                
+                <button class="ck" data-action="number" data-val="0">0</button>
+                <button class="ck" data-action="decimal">,</button>
+                <button class="ck" data-action="backspace">Del</button>
+                <button class="ck ck-eq" data-action="equals">=</button>
+            </div>
+        </div>
+    `;
+
+    const scrollArea = document.getElementById("calcScrollArea");
+    if (scrollArea) scrollArea.scrollTop = scrollArea.scrollHeight;
+
+    pg.removeEventListener("click", handleCalcClick);
+    pg.addEventListener("click", handleCalcClick);
+
+    if (hasHistory) {
+        const clearBtn = document.getElementById("clearHistoryBtn");
+        if (clearBtn) {
+            clearBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                clearCalcHistory();
+            });
         }
     }
-    const lastIsOp = () => expr.length > 0 && OPS.includes(expr.slice(-1));
-    const lastIsNum = () =>
-        expr.length > 0 && "0123456789.)".includes(expr.slice(-1));
-    const lastChar = () => expr.slice(-1);
-    function pressNum(n) {
-        if (justEq) {
-            expr = "";
-            justEq = false;
+}
+
+function handleCalcClick(e) {
+    const target = e.target.closest("button");
+    if (!target) return;
+    
+    const historyItem = e.target.closest(".calc-history-item");
+    if (historyItem) {
+        const expr = historyItem.dataset.expr;
+        const result = historyItem.dataset.result;
+        if (expr) {
+            calcExpression = expr;
+            calcResult = result;
+            updateCalcDisplay();
         }
-        expr += n;
+        return;
     }
-    function pressOp(o) {
-        if (justEq) justEq = false;
-        if (!expr) return;
-        if (lastIsOp()) {
-            expr = expr.slice(0, -1) + o;
-        } else if (lastChar() !== "(") {
-            expr += o;
-        }
-    }
-    function pressParen() {
-        if (justEq) {
-            expr = "";
-            justEq = false;
-        }
-        if (!expr || lastIsOp() || lastChar() === "(") {
-            expr += "(";
-        } else if (unclosedParens() > 0 && lastIsNum()) {
-            expr += ")";
+
+    const action = target.dataset.action;
+    
+    if (action === "number") {
+        const val = target.dataset.val;
+        if (calcExpression === "0" || calcExpression === "Error") {
+            calcExpression = val;
         } else {
-            expr += "(";
+            calcExpression += val;
         }
+        updateCalcDisplay();
+        return;
     }
-    function pressDot() {
-        if (justEq) {
-            expr = "";
-            justEq = false;
-        }
-        const parts = expr.split(/[+−×÷()]/);
+    
+    if (action === "decimal") {
+        const parts = calcExpression.split(/[\+\-\×\÷\%\*\/]/);
         const last = parts[parts.length - 1];
-        if (!last.includes(".")) expr += ".";
-    }
-    function pressPercent() {
-        if (justEq) {
-            expr = "";
-            justEq = false;
+        if (!last.includes(",") && !last.includes(".")) {
+            calcExpression += ",";
         }
-        if (!expr) return;
-
-        // Cari angka terakhir dan operator (jika ada)
-        let match = expr.match(/(\d+(?:[.,]\d+)?)([+\-×÷]?)$/);
-        if (!match) return;
-
-        let lastNumStr = match[1].replace(/,/g, "."); // ganti koma dengan titik
-        let lastNum = parseFloat(lastNumStr);
-        let lastOp = match[2];
-
-        if (lastOp) {
-            // Ada operator, cari angka di kiri operator
-            let opIndex = expr.lastIndexOf(lastOp);
-            let leftExpr = expr.slice(0, opIndex);
-            let leftVal = tryEval(leftExpr);
-            if (leftVal !== null && !isNaN(leftVal)) {
-                let percentVal = (leftVal * lastNum) / 100;
-                expr = leftExpr + lastOp + percentVal.toString();
-            } else {
-                // Fallback: ubah persen menjadi desimal biasa
-                expr = leftExpr + lastOp + (lastNum / 100).toString();
-            }
+        updateCalcDisplay();
+        return;
+    }
+    
+    if (action === "smartParentheses") {
+        const openCount = (calcExpression.match(/\(/g) || []).length;
+        const closeCount = (calcExpression.match(/\)/g) || []).length;
+        const lastChar = calcExpression.slice(-1);
+        
+        if (calcExpression === "0" || calcExpression === "Error") {
+            calcExpression = "(";
+        } else if (openCount > closeCount && !["+", "-", "*", "/", "%", "("].includes(lastChar)) {
+            calcExpression += ")";
         } else {
-            // Tidak ada operator, ubah angka terakhir menjadi desimal
-            expr = expr.slice(0, -match[0].length) + (lastNum / 100).toString();
+            calcExpression += "(";
         }
-        justEq = false;
+        updateCalcDisplay();
+        return;
     }
-    function pressEq() {
-        if (!expr) return;
-        const open = unclosedParens();
-        const full = expr + ")".repeat(open);
-        const hasOp = OPS.some(op => full.includes(op));
-        if (!hasOp) {
-            expr = full;
-            justEq = true;
-            return;
-        }
-        try {
-            const res = evaluate(full);
-            if (res === null || !isFinite(res)) {
-                expr = "Error";
-                justEq = true;
-                return;
-            }
-            const result = res.toString();
-            history.push({ expr: full, result });
-            if (history.length > 50) history.shift();
-            saveHistory();
-            expr = result;
-            justEq = true;
-        } catch {
-            expr = "Error";
-            justEq = true;
-        }
-    }
-    function pressDel() {
-        if (justEq) {
-            expr = "";
-            justEq = false;
-            return;
-        }
-        if (expr === "Error") {
-            expr = "";
-            return;
-        }
-        expr = expr.slice(0, -1);
-    }
-    function pressClear() {
-        expr = "";
-        justEq = false;
-    }
-    function getExprLine() {
-        if (justEq) return expr;
-        return expr || "0";
-    }
-    function getResultLine() {
-        if (justEq) return "";
-        const live = tryEval(expr);
-        return live !== null && live !== expr ? "= " + live : "";
-    }
-    function isJustEq() {
-        return justEq;
-    }
-    function clearHistory() {
-        history = [];
-        saveHistory();
-    }
-    return {
-        pressNum,
-        pressOp,
-        pressDot,
-        pressPercent,
-        pressEq,
-        pressDel,
-        pressClear,
-        pressParen,
-        getExprLine,
-        getResultLine,
-        isJustEq,
-        getCur: () => expr || "0",
-        getHistory: () => history,
-        clearHistory
-    };
-})();
-
-function renderKalkulator(animate = false) {
-    const pg = $("#page-kalkulator");
-    const hist = Calc.getHistory();
-    const total = hist.length;
-    const histHTML =
-        total === 0
-            ? ""
-            : hist
-                  .map(
-                      (h, i) => `<div class="calc-history-item" ...>
-    <span class="calc-history-expr">${h.expr} =</span>
-    <span class="calc-history-result">${fmtNum(parseFloat(h.result))}</span>
-</div>`
-                  )
-                  .join("");
-    pg.innerHTML = `<div class="calc-scroll-area" id="calcScrollArea">${Calc.getHistory().length > 0 ? `<button class="calc-history-clear" id="calcHistClear"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg> Hapus</button>` : ""}<div class="calc-history-list">${histHTML}</div></div><div class="calc-fixed-bottom"><div class="calc-display"><div class="calc-expr" id="calcExpr"></div><div class="calc-val" id="calcVal"></div></div><div class="calc-grid"><button class="ck ck-clear" data-c="AC">AC</button><button class="ck ck-op" data-c="()">(  )</button><button class="ck ck-op" data-c="%">%</button><button class="ck ck-op" data-c="÷">÷</button><button class="ck" data-c="7">7</button><button class="ck" data-c="8">8</button><button class="ck" data-c="9">9</button><button class="ck ck-op" data-c="×">×</button><button class="ck" data-c="4">4</button><button class="ck" data-c="5">5</button><button class="ck" data-c="6">6</button><button class="ck ck-op" data-c="−">−</button><button class="ck" data-c="1">1</button><button class="ck" data-c="2">2</button><button class="ck" data-c="3">3</button><button class="ck ck-op" data-c="+">+</button><button class="ck" data-c="0">0</button><button class="ck" data-c=".">.</button><button class="ck ck-op" data-c="DEL">⌫</button><button class="ck ck-eq" data-c="=">=</button></div></div>`;
-    function update() {
-        const exprEl = $("#calcExpr"),
-            valEl = $("#calcVal");
-        if (Calc.isJustEq()) {
-            exprEl.textContent = Calc.getExprLine();
-            exprEl.style.fontSize = "36px";
-            exprEl.style.fontWeight = "700";
-            exprEl.style.color = "var(--text)";
-            valEl.textContent = "";
+    
+    if (action === "operator") {
+        let op = target.dataset.op;
+        const opMap = { "÷": "/", "×": "*", "+": "+", "-": "-", "%": "%" };
+        const evalOp = opMap[op] || op;
+        const lastChar = calcExpression.slice(-1);
+        if (["+", "-", "*", "/", "%"].includes(lastChar)) {
+            calcExpression = calcExpression.slice(0, -1) + evalOp;
         } else {
-            exprEl.textContent = Calc.getExprLine();
-            exprEl.style.fontSize = "";
-            exprEl.style.fontWeight = "";
-            exprEl.style.color = "";
-            valEl.textContent = Calc.getResultLine();
+            calcExpression += evalOp;
         }
+        updateCalcDisplay();
+        return;
     }
-    update();
-    $$(".ck", pg).forEach(btn =>
-        btn.addEventListener("click", () => {
-            const c = btn.dataset.c;
-            if ("0123456789".includes(c)) Calc.pressNum(c);
-            else if (c === ".") Calc.pressDot();
-            else if (c === "%") Calc.pressPercent();
-            else if (c === "()") Calc.pressParen();
-            else if (["+", "−", "×", "÷"].includes(c)) Calc.pressOp(c);
-            else if (c === "=") {
-                Calc.pressEq();
-                renderKalkulator(true);
-                const sa = $("#calcScrollArea");
-                if (sa) sa.scrollTop = sa.scrollHeight;
-                return;
-            } else if (c === "AC") Calc.pressClear();
-            else if (c === "DEL") Calc.pressDel();
-            update();
-        })
-    );
-    $$(".calc-history-item", pg).forEach(item =>
-        item.addEventListener("click", () => {
-            const idx = parseInt(item.dataset.hidx);
-            const h = Calc.getHistory()[idx];
-            if (h) {
-                Calc.pressClear();
-                let resultStr = h.result;
-                for (let ch of resultStr) {
-                    if ("0123456789".includes(ch)) Calc.pressNum(ch);
-                    else if (ch === ".") Calc.pressDot();
+    
+    if (action === "clear") {
+        calcExpression = "0";
+        calcResult = "";
+        updateCalcDisplay();
+        return;
+    }
+    
+    if (action === "backspace") {
+        if (calcExpression.length > 1) {
+            calcExpression = calcExpression.slice(0, -1);
+        } else {
+            calcExpression = "0";
+        }
+        updateCalcDisplay();
+        return;
+    }
+    
+if (action === "percent") {
+    // 1. Konversi display ke internal (titik sebagai desimal, * dan / sebagai operator)
+    let internalExpr = calcExpression
+        .replace(/×/g, "*")
+        .replace(/÷/g, "/")
+        .replace(/,/g, ".");  // ⬅️ KRUSIAL: koma → titik
+    
+    // 2. Cari angka terakhir
+    const numberMatch = internalExpr.match(/(\d+\.?\d*)(%?)$/);
+    
+    if (numberMatch) {
+        const lastNumberStr = numberMatch[1];
+        const lastNumber = parseFloat(lastNumberStr);
+        const percentDecimal = lastNumber / 100;
+        
+        // 3. Cari operator sebelum angka terakhir
+        const beforeNumber = internalExpr.slice(0, -numberMatch[0].length);
+        const operatorMatch = beforeNumber.match(/[+\-*/]$/);
+        
+        if (operatorMatch) {
+            const operator = operatorMatch[0];
+            const beforeOperator = beforeNumber.slice(0, -1);
+            
+            if (operator === "+" || operator === "-") {
+                const prevExprMatch = beforeOperator.match(/(\d+\.?\d*|\([^)]+\))$/);
+                
+                if (prevExprMatch) {
+                    let prevExpr = prevExprMatch[1];
+                    let prevValue;
+                    
+                    if (prevExpr.startsWith("(")) {
+                        try {
+                            prevValue = Function(`"use strict"; return ${prevExpr}`)();
+                        } catch (e) {
+                            prevValue = 0;
+                        }
+                    } else {
+                        prevValue = parseFloat(prevExpr);
+                    }
+                    
+                    const calculated = prevValue * percentDecimal;
+                    const beforePrev = beforeOperator.slice(0, -prevExprMatch[0].length);
+                    
+                    // ⬅️ SIMPAN DENGAN TITIK (format internal)
+                    calcExpression = beforePrev + prevExpr + operator + calculated;
                 }
-                update();
+            } else if (operator === "*" || operator === "/") {
+                // ⬅️ SIMPAN DENGAN TITIK (format internal)
+                calcExpression = beforeOperator + operator + percentDecimal;
             }
-        })
-    );
-    const histClearBtn = $("#calcHistClear");
-    if (histClearBtn)
-        histClearBtn.addEventListener("click", () => {
-            Calc.clearHistory();
-            renderKalkulator();
-        });
+        } else {
+            // ⬅️ SIMPAN DENGAN TITIK (format internal)
+            calcExpression = String(percentDecimal);
+        }
+        
+        // Hapus sisa karakter %
+        calcExpression = calcExpression.replace(/%/g, "");
+        calcResult = "";
+    }
+    
+    updateCalcDisplay();
+    return;
+}
+    
+    if (action === "equals") {
+        const result = evaluateExpression(calcExpression);
+        if (result !== "Error") {
+            calcResult = String(result).replace(".", ",");
+            addCalcToHistory(calcExpression, calcResult);
+            const historyList = document.getElementById("calcHistoryList");
+            if (historyList) {
+                const displayExpr = calcExpression.replace(/\*/g, "×").replace(/\//g, "÷");
+                const newItem = document.createElement("div");
+                newItem.className = "calc-history-item";
+                newItem.dataset.expr = calcExpression;
+                newItem.dataset.result = calcResult;
+                newItem.innerHTML = `
+                    <div class="calc-history-expr">${displayExpr}</div>
+                    <div class="calc-history-result">${calcResult}</div>
+                `;
+                historyList.appendChild(newItem);
+                const scrollArea = document.getElementById("calcScrollArea");
+                if (scrollArea) scrollArea.scrollTop = scrollArea.scrollHeight;
+                
+                // Jika sebelumnya tidak ada history, tombol clear belum muncul. Render ulang agar tombol muncul.
+                if (calcHistory.length === 1) {
+                    renderKalkulator();
+                    return;
+                }
+            }
+        } else {
+            calcResult = "Error";
+        }
+        updateCalcDisplay();
+    }
 }
 
 // ==================== CONFIRM POPUP ====================
