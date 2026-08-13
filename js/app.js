@@ -523,13 +523,8 @@ function renderHitungan() {
         pg.innerHTML = `
       <div class="empty-state">
         <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
-        <p>Belum ada data mulai hari ini ke depan.<br/>Ketuk tombol di bawah untuk menambahkan produk.</p>
-      </div>
-      <button class="fab" id="fabBtn">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        Tambah Produk
-      </button>`;
-        attachFabEvent();
+        <p>Belum ada data mulai hari ini ke depan.<br/>Tambahkan produk melalui tab Beranda.</p>
+      </div>`;
         return;
     }
 
@@ -545,18 +540,12 @@ function renderHitungan() {
         html += `</div></div>`;
     }
 
-    pg.innerHTML =
-        html +
-        `<button class="fab" id="fabBtn">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      Tambah Produk
-    </button>`;
+    pg.innerHTML = html;
 
     $$(".cards-grid", pg).forEach(grid => {
         attachCardEvents(grid);
         makeSortable(grid);
     });
-    attachFabEvent();
     $$(".product-card", pg).forEach(card => {
         if (openCards.has(card.dataset.pid)) card.classList.add("card-open");
     });
@@ -579,14 +568,6 @@ function renderHitungan() {
             if (!isOpen) openCards.add(pid);
             else openCards.delete(pid);
         });
-    }
-}
-
-function attachFabEvent() {
-    const btn = document.getElementById("fabBtn");
-    if (btn) {
-        btn.removeEventListener("click", openAddModal);
-        btn.addEventListener("click", openAddModal);
     }
 }
 

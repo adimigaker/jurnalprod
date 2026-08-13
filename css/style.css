@@ -671,10 +671,10 @@ html.light .icon-moon {
     height: 11px;
 }
 /* ===== SINGLE MODE – TOMBOL HAPUS ===== */
-#page-beranda .product-cols.single .container-row-top {
+#page-hitungan .product-cols.single .container-row-top {
     position: relative;
 }
-#page-beranda .product-cols.single .container-input {
+#page-hitungan .product-cols.single .container-input {
     padding-right: 0;
 }
 .col-label {
@@ -1924,68 +1924,68 @@ html.light .icon-moon {
 }
 
 /* Single mode - lebih spesifik dengan .product-card */
-#page-beranda .product-card .product-cols.single .mult-step-btn {
+#page-hitungan .product-card .product-cols.single .mult-step-btn {
     width: var(--stepper-size-single);
     height: var(--stepper-size-single);
     font-size: clamp(18px, 5vw, 24px);
 }
-#page-beranda .product-card .product-cols.single .mult-step-input {
+#page-hitungan .product-card .product-cols.single .mult-step-input {
     width: var(--stepper-size-single);
     height: var(--stepper-size-single);
     font-size: clamp(13px, 4vw, 16px);
 }
-#page-beranda .product-card .product-cols.single .container-input {
+#page-hitungan .product-card .product-cols.single .container-input {
     font-size: clamp(22px, 6vw, 28px);
     padding: 10px;
     height: var(--input-size-single);
     max-width: min(200px, 50vw);
 }
-#page-beranda .product-card .product-cols.single .mult-result {
+#page-hitungan .product-card .product-cols.single .mult-result {
     font-size: clamp(17px, 5vw, 22px);
 }
-#page-beranda .product-card .product-cols.single .container-row-top,
-#page-beranda .product-card .product-cols.single .container-row-bottom {
+#page-hitungan .product-card .product-cols.single .container-row-top,
+#page-hitungan .product-card .product-cols.single .container-row-bottom {
     justify-content: center;
 }
-#page-beranda .product-card .product-cols.single .container-row-result {
+#page-hitungan .product-card .product-cols.single .container-row-result {
     padding-top: 2px;
     margin-top: 1px;
 }
-#page-beranda .product-card .product-cols.single .add-container-btn {
+#page-hitungan .product-card .product-cols.single .add-container-btn {
     max-width: 220px;
     margin: 12px auto 0 auto;
 }
 
 /* ===== SAMPLE MODE (vertical) - menggunakan ukuran yang sama dengan single mode ===== */
 /* Beranda: sample vertical */
-#page-beranda .sample-vertical .container-input {
+#page-hitungan .sample-vertical .container-input {
     font-size: clamp(22px, 6vw, 28px);
     padding: 10px;
     height: var(--input-size-single);
     max-width: min(200px, 50vw);
 }
-#page-beranda .sample-vertical .mult-step-btn {
+#page-hitungan .sample-vertical .mult-step-btn {
     width: var(--stepper-size-single);
     height: var(--stepper-size-single);
     font-size: clamp(18px, 5vw, 24px);
 }
-#page-beranda .sample-vertical .mult-step-input {
+#page-hitungan .sample-vertical .mult-step-input {
     width: var(--stepper-size-single);
     height: var(--stepper-size-single);
     font-size: clamp(13px, 4vw, 16px);
 }
-#page-beranda .sample-vertical .mult-result {
+#page-hitungan .sample-vertical .mult-result {
     font-size: clamp(17px, 5vw, 22px);
 }
-#page-beranda .sample-vertical .container-row-top,
-#page-beranda .sample-vertical .container-row-bottom {
+#page-hitungan .sample-vertical .container-row-top,
+#page-hitungan .sample-vertical .container-row-bottom {
     justify-content: center;
 }
-#page-beranda .sample-vertical .container-row-result {
+#page-hitungan .sample-vertical .container-row-result {
     padding-top: 2px;
     margin-top: 1px;
 }
-#page-beranda .sample-vertical .add-container-btn {
+#page-hitungan .sample-vertical .add-container-btn {
     max-width: 220px;
     margin: 12px auto 0 auto;
 }
@@ -2024,55 +2024,55 @@ html.light .icon-moon {
 }
 
 /* Split mode — lebih kompak karena 2 kolom */
-#page-beranda .product-cols.double .mult-step-btn {
+#page-hitungan .product-cols.double .mult-step-btn {
     width: var(--stepper-size-split);
     height: var(--stepper-size-split);
     font-size: clamp(16px, 4vw, 20px);
 }
-#page-beranda .product-cols.double .mult-step-input {
+#page-hitungan .product-cols.double .mult-step-input {
     width: var(--stepper-size-split);
     height: var(--stepper-size-split);
     font-size: clamp(11px, 3vw, 14px);
 }
-#page-beranda .product-cols.double .container-input {
+#page-hitungan .product-cols.double .container-input {
     font-size: clamp(18px, 5vw, 24px);
     padding: 8px 6px;
     height: var(--input-size-split);
 }
-#page-beranda .product-cols.double .mult-result {
+#page-hitungan .product-cols.double .mult-result {
     font-size: clamp(14px, 4vw, 18px);
 }
-#page-beranda .product-cols.double .container-row {
+#page-hitungan .product-cols.double .container-row {
     padding: 8px;
     gap: 6px;
 }
 
 /* Shared */
-#page-beranda .container-row-bottom {
+#page-hitungan .container-row-bottom {
     gap: 4px;
     flex-wrap: wrap;
 }
-#page-beranda .mult-label-kontainer {
+#page-hitungan .mult-label-kontainer {
     width: 100%;
     text-align: center;
     font-size: 11px;
     color: var(--text-muted);
     margin-top: -4px;
 }
-#page-beranda .container-row-result {
+#page-hitungan .container-row-result {
     padding-top: 6px;
     margin-top: 4px;
 }
-#page-beranda .container-row {
+#page-hitungan .container-row {
     position: relative;
     gap: 8px;
     padding: 10px;
 }
-#page-beranda .add-container-btn {
+#page-hitungan .add-container-btn {
     font-size: 14px;
     padding: 12px;
 }
-#page-beranda .add-container-btn svg {
+#page-hitungan .add-container-btn svg {
     width: 14px;
     height: 14px;
 }
@@ -2271,11 +2271,11 @@ html.light .icon-moon {
     }
 
     /* Beranda: produk 2 kolom */
-    #page-beranda {
+    #page-hitungan {
         padding: 20px 32px 80px;
     }
 
-    #page-beranda .section-header {
+    #page-hitungan .section-header {
         margin-bottom: 16px;
     }
 
@@ -2310,7 +2310,7 @@ html.light .icon-moon {
     .app-header {
         padding: 14px 48px;
     }
-    #page-beranda {
+    #page-hitungan {
         padding: 24px 48px 80px;
     }
     #page-riwayat,
@@ -2656,9 +2656,9 @@ html.light .icon-moon {
 .bd-card {
     margin: 12px;
     padding: 14px;
-    background: var(--bg-elevated);
+    background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: var(--radius-lg, 16px);
+    border-radius: var(--radius);
 }
 .bd-card-head {
     display: flex;
@@ -2689,15 +2689,15 @@ html.light .icon-moon {
 .bd-stat {
     font-size: 12px;
     padding: 4px 8px;
-    border-radius: var(--radius-sm, 8px);
-    background: var(--bg);
+    border-radius: var(--radius-sm);
+    background: var(--bg-card);
     border: 1px solid var(--border);
 }
 .bd-stat-ok { color: #3fb950; border-color: #3fb950; }
 .bd-stat-kurang { color: #f78166; border-color: #f78166; }
 .bd-empty {
     font-size: 13px;
-    color: var(--muted, #8b949e);
+    color: var(--text-muted);
     padding: 10px 0;
 }
 .bd-row {
@@ -2719,7 +2719,7 @@ html.light .icon-moon {
 }
 .bd-unit {
     font-size: 11px;
-    color: var(--muted, #8b949e);
+    color: var(--text-muted);
 }
 .bd-del {
     width: 26px;
@@ -2727,12 +2727,12 @@ html.light .icon-moon {
     border: none;
     border-radius: 8px;
     background: transparent;
-    color: var(--muted, #8b949e);
+    color: var(--text-muted);
     font-size: 16px;
     line-height: 1;
     cursor: pointer;
 }
-.bd-del:active { background: var(--bg); }
+.bd-del:active { background: var(--bg-card); }
 .bd-cols {
     display: grid;
     gap: 8px;
@@ -2741,19 +2741,20 @@ html.light .icon-moon {
 .bd-row:has(.bd-cols .bd-col:nth-child(3)) .bd-cols { grid-template-columns: repeat(3, 1fr); }
 .bd-col-label {
     font-size: 11px;
-    color: var(--muted, #8b949e);
+    color: var(--text-muted);
     margin-bottom: 4px;
 }
 .bd-input {
     width: 100%;
-    padding: 8px;
-    font-size: 16px;
+    padding: 11px 13px;
+    font-size: 15px;
     font-weight: 600;
     text-align: center;
-    background: var(--bg);
+    background: var(--bg-input);
     border: 1px solid var(--border);
-    border-radius: var(--radius-sm, 8px);
-    color: var(--fg, inherit);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-family: var(--sans);
 }
 .bd-input:focus {
     border-color: var(--border-focus);
@@ -2761,21 +2762,28 @@ html.light .icon-moon {
 }
 .bd-col-target {
     font-size: 10px;
-    color: var(--muted, #8b949e);
+    color: var(--text-muted);
     text-align: center;
     margin-top: 4px;
 }
 .bd-add {
     width: 100%;
     margin-top: 12px;
-    padding: 10px;
+    padding: 13px;
     font-size: 14px;
     font-weight: 600;
-    border: 1px dashed var(--border-focus);
-    border-radius: var(--radius-sm, 8px);
-    background: var(--accent-soft);
-    color: var(--accent-text);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-elevated);
+    color: var(--text-muted);
     cursor: pointer;
+    font-family: var(--sans);
+    transition: all var(--transition);
+    -webkit-tap-highlight-color: transparent;
+}
+.bd-add:hover {
+    border-color: var(--accent);
+    color: var(--accent);
 }
 
 /* ==================== LAPORAN ==================== */
@@ -2804,7 +2812,7 @@ html.light .icon-moon {
     border: none;
     border-radius: 10px;
     background: var(--bg-elevated);
-    color: var(--muted, #8b949e);
+    color: var(--text-muted);
     font-size: 18px;
     cursor: pointer;
 }
@@ -2815,14 +2823,17 @@ html.light .icon-moon {
     margin-top: 8px;
 }
 .lp-chip {
-    padding: 6px 12px;
-    font-size: 12px;
-    font-weight: 600;
-    border-radius: 999px;
+    padding: 7px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 20px;
     border: 1px solid var(--border);
-    background: var(--bg-elevated);
-    color: var(--muted, #8b949e);
+    background: var(--bg-card);
+    color: var(--text-muted);
     cursor: pointer;
+    font-family: var(--sans);
+    transition: all var(--transition);
+    -webkit-tap-highlight-color: transparent;
 }
 .lp-chip.on {
     border-color: var(--accent);
@@ -2843,27 +2854,34 @@ html.light .icon-moon {
     min-width: 0;
     padding: 8px 10px;
     font-size: 14px;
-    background: var(--bg-elevated);
+    background: var(--bg-input);
     border: 1px solid var(--border);
-    border-radius: var(--radius-sm, 8px);
-    color: var(--fg, inherit);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-family: var(--sans);
 }
-.lp-picker-sep { color: var(--muted, #8b949e); }
+.lp-picker:focus,
+.lp-search:focus {
+    outline: none;
+    border-color: var(--border-focus);
+}
+.lp-picker-sep { color: var(--text-muted); }
 .lp-filters { margin-top: 10px; }
 .lp-search {
     width: 100%;
     padding: 8px 10px;
     font-size: 14px;
-    background: var(--bg-elevated);
+    background: var(--bg-input);
     border: 1px solid var(--border);
-    border-radius: var(--radius-sm, 8px);
-    color: var(--fg, inherit);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-family: var(--sans);
 }
 .lp-body { padding: 12px; }
 .lp-period-label {
     font-size: 13px;
     font-weight: 600;
-    color: var(--muted, #8b949e);
+    color: var(--text-muted);
     margin-bottom: 10px;
 }
 .lp-stats-grid {
@@ -2874,14 +2892,14 @@ html.light .icon-moon {
 }
 .lp-stat {
     padding: 10px;
-    background: var(--bg-elevated);
+    background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: var(--radius-sm, 8px);
+    border-radius: var(--radius-sm);
     text-align: center;
 }
 .lp-stat-label {
     font-size: 10px;
-    color: var(--muted, #8b949e);
+    color: var(--text-muted);
     margin-bottom: 4px;
 }
 .lp-stat-val {
@@ -2894,7 +2912,7 @@ html.light .icon-moon {
 .lp-section-title {
     font-size: 13px;
     font-weight: 700;
-    color: var(--muted, #8b949e);
+    color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
@@ -2912,11 +2930,11 @@ html.light .icon-moon {
     overflow: hidden;
     text-overflow: ellipsis;
 }
-.lp-top-days { font-weight: 400; color: var(--muted, #8b949e); }
+.lp-top-days { font-weight: 400; color: var(--text-muted); }
 .lp-top-bar-wrap {
     flex: 1;
     height: 8px;
-    background: var(--bg-elevated);
+    background: var(--bg-card);
     border-radius: 999px;
     overflow: hidden;
 }
@@ -2933,9 +2951,9 @@ html.light .icon-moon {
 }
 .lp-day {
     margin-bottom: 12px;
-    background: var(--bg-elevated);
+    background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: var(--radius-sm, 8px);
+    border-radius: var(--radius-sm);
     overflow: hidden;
 }
 .lp-day-head {
@@ -2969,12 +2987,12 @@ html.light .icon-moon {
     font-size: 11px;
     padding: 3px 8px;
     border-radius: 6px;
-    background: var(--bg);
+    background: var(--bg-card);
     border: 1px solid var(--border);
 }
 .lp-note {
     font-size: 11px;
-    color: var(--muted, #8b949e);
+    color: var(--text-muted);
     margin-top: 6px;
     font-style: italic;
 }
@@ -2982,7 +3000,7 @@ html.light .icon-moon {
     padding: 20px;
     text-align: center;
     font-size: 13px;
-    color: var(--muted, #8b949e);
+    color: var(--text-muted);
 }
 .lp-actions {
     position: fixed;
@@ -2996,12 +3014,19 @@ html.light .icon-moon {
 }
 .lp-share {
     width: 100%;
-    padding: 12px;
+    padding: 13px;
     font-size: 15px;
-    font-weight: 700;
+    font-weight: 600;
     border: none;
-    border-radius: var(--radius-sm, 8px);
+    border-radius: var(--radius-sm);
     background: var(--accent);
     color: #fff;
     cursor: pointer;
+    font-family: var(--sans);
+    box-shadow: 0 2px 12px rgba(56, 139, 253, 0.3);
+    transition: transform var(--transition), box-shadow var(--transition);
+}
+.lp-share:active {
+    transform: scale(0.97);
+    box-shadow: none;
 }
