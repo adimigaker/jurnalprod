@@ -3,6 +3,7 @@
     "short_name": "JurnalProduksi",
     "description": "Aplikasi pencatatan produksi MBG",
     "start_url": ".",
+    "scope": "/jurnalproduksi/",
     "display": "standalone",
     "background_color": "#0f172a",
     "theme_color": "#0f172a",

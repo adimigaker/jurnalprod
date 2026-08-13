@@ -1,11 +1,11 @@
 const CACHE_NAME = 'jurnal-produksi-v1';
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/css/style.css',
-  '/js/app.js',
-  '/manifest.json',
-  '/icon.svg'
+  '/jurnalproduksi/',
+  '/jurnalproduksi/index.html',
+  '/jurnalproduksi/css/style.css',
+  '/jurnalproduksi/js/app.js',
+  '/jurnalproduksi/manifest.json',
+  '/jurnalproduksi/icon.svg'
 ];
 
 self.addEventListener('install', event => {
