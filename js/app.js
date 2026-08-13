@@ -288,7 +288,8 @@ const scrollPositions = {
     hitungan: 0,
     riwayat: 0,
     kalender: 0,
-    kalkulator: 0
+    kalkulator: 0,
+    laporan: 0
 };
 
 function saveScrollPosition(tab) {
@@ -346,6 +347,7 @@ async function refreshApp() {
         if (currentTab === "riwayat") renderRiwayat();
         if (currentTab === "kalender") renderKalender();
         if (currentTab === "kalkulator") renderKalkulator();
+        if (currentTab === "laporan") renderLaporan();
         restoreScrollPosition(currentTab);
         showToast("✓ Data diperbarui", "ok");
     } catch (e) {
@@ -478,6 +480,7 @@ function setTab(tab) {
     if (tab === "riwayat") renderRiwayat();
     if (tab === "kalender") renderKalender();
     if (tab === "kalkulator") renderKalkulator();
+    if (tab === "laporan") renderLaporan();
     restoreScrollPosition(tab);
 }
 
@@ -491,6 +494,7 @@ function refreshCurrentPage() {
     if (currentTab === "riwayat") renderRiwayat();
     if (currentTab === "kalender") renderKalender();
     if (currentTab === "kalkulator") renderKalkulator();
+    if (currentTab === "laporan") renderLaporan();
 }
 
 let prevTab = "beranda";
@@ -1927,6 +1931,7 @@ $("#btnEditSimpan").addEventListener("click", () => {
     if (currentTab === "kalender") renderKalender();
     if (currentTab === "beranda") renderBeranda();
     if (currentTab === "hitungan") renderHitungan();
+    if (currentTab === "laporan") renderLaporan();
 });
 
 function deleteFromHistory(pid) {
@@ -3237,6 +3242,7 @@ async function periodicSync() {
             if (currentTab === "riwayat") renderRiwayat();
             if (currentTab === "kalender") renderKalender();
             if (currentTab === "kalkulator") renderKalkulator();
+            if (currentTab === "laporan") renderLaporan();
             restoreScrollPosition(currentTab);
             showToast("🔄 Data tersinkronisasi", "ok");
         }
