@@ -1,0 +1,116 @@
+// ==================== BERANDA (RINGKASAN) ====================
+const esc = s =>
+    String(s).replace(/[&<>"']/g, m =>
+        ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m])
+    );
+
+function berandaCard(date, badge) {
+    const items = DB.get()
+        .filter(p => p.date === date)
+        .sort((a, b) => (a.order || 0) - (b.order || 0));
+
+    const totalProduksi = items.reduce((s, p) => s + LaporanCore.productTotal(p), 0);
+    const totalTarget = items.reduce((s, p) => s + LaporanCore.productTarget(p), 0);
+    const targetMet =
+        totalTarget > 0 ? (totalProduksi >= totalTarget ? "ok" : "kurang") : "none";
+
+    const rows = items.map(p => {
+        const cols = LaporanCore.colKeys(p);
+        const labels = LaporanCore.colLabels(p);
+        const colHtml = cols
+            .map(c => {
+                const total = LaporanCore.colTotal(p, c);
+                const target = LaporanCore.colTarget(p, c);
+                const tgtLine = p.sample
+                    ? ""
+                    : `<div class="bd-col-target">target ${formatNumberForDisplay(target)}</div>`;
+                return `
+                <div class="bd-col">
+                    <div class="bd-col-label">${labels[c]}</div>
+                    <input class="bd-input" inputmode="decimal" data-pid="${p.id}" data-col="${c}"
+                        value="${formatNumberForDisplay(total)}" />
+                    ${tgtLine}
+                </div>`;
+            })
+            .join("");
+        return `
+            <div class="bd-row">
+                <div class="bd-row-head">
+                    <span class="bd-name" data-bd-edit="${p.id}">${esc(p.name)}</span>
+                    <span class="bd-unit">${esc(p.unit || "pcs")}</span>
+                    <button class="bd-del" data-bd-del="${p.id}" title="Hapus">×</button>
+                </div>
+                <div class="bd-cols">${colHtml}</div>
+            </div>`;
+    }).join("");
+
+    const statsLine = items.length
+        ? `<div class="bd-stats">
+            <span class="bd-stat">${items.length} produk</span>
+            <span class="bd-stat">total ${formatNumberForDisplay(totalProduksi)}</span>
+            ${totalTarget > 0
+                ? `<span class="bd-stat bd-stat-${targetMet}">
+                    target ${formatNumberForDisplay(totalTarget)}
+                    ${targetMet === "ok" ? "✓" : "⚠"}</span>`
+                : ""}
+          </div>`
+        : `<div class="bd-empty">Belum ada produk untuk tanggal ini.</div>`;
+
+    return `
+        <div class="bd-card">
+            <div class="bd-card-head">
+                <span class="bd-date">${LaporanCore.fmtLong(date)}</span>
+                <span class="bd-badge">${badge}</span>
+            </div>
+            ${statsLine}
+            ${rows}
+            <button class="bd-add" data-bd-add="${date}">+ Tambah Produk</button>
+        </div>`;
+}
+
+function renderBeranda() {
+    const pg = $("#page-beranda");
+    if (!pg) return;
+    const t = today();
+    const besok = LaporanCore.addDays(t, 1);
+    pg.innerHTML = berandaCard(t, "Hari Ini") + berandaCard(besok, "Besok");
+
+    if (pg._bdAttached) return;
+    pg._bdAttached = true;
+
+    pg.addEventListener("click", e => {
+        const addBtn = e.target.closest("[data-bd-add]");
+        if (addBtn) {
+            openAddModal(addBtn.dataset.bdAdd);
+            return;
+        }
+        const del = e.target.closest("[data-bd-del]");
+        if (del) {
+            e.stopPropagation();
+            const pid = del.dataset.bdDel;
+            Confirm.show(del, () => {
+                DB.deleteProduct(pid);
+                renderBeranda();
+                if (currentTab === "hitungan") renderHitungan();
+            });
+            return;
+        }
+        const edit = e.target.closest("[data-bd-edit]");
+        if (edit) openEditModal(edit.dataset.bdEdit);
+    });
+
+    pg.addEventListener("change", e => {
+        const inp = e.target.closest(".bd-input");
+        if (!inp) return;
+        const pid = inp.dataset.pid;
+        const col = inp.dataset.col;
+        const data = DB.get();
+        const p = data.find(x => x.id === pid);
+        if (!p) return;
+        const val = parseNumberFromInput(inp.value);
+        p.containers = { ...p.containers, [col]: [{ val, mult: 1 }] };
+        saveAndSync(pid, data);
+        renderBeranda();
+        if (currentTab === "hitungan") renderHitungan();
+    });
+}

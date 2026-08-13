@@ -2651,3 +2651,129 @@ html.light .icon-moon {
     background: var(--sample-stirfried-bg) !important;
 }
 
+
+/* ==================== BERANDA (RINGKASAN) ==================== */
+.bd-card {
+    margin: 12px;
+    padding: 14px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg, 16px);
+}
+.bd-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+.bd-date {
+    font-weight: 600;
+    font-size: 15px;
+}
+.bd-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: var(--accent-soft);
+    color: var(--accent-text);
+    white-space: nowrap;
+}
+.bd-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+.bd-stat {
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: var(--radius-sm, 8px);
+    background: var(--bg);
+    border: 1px solid var(--border);
+}
+.bd-stat-ok { color: #3fb950; border-color: #3fb950; }
+.bd-stat-kurang { color: #f78166; border-color: #f78166; }
+.bd-empty {
+    font-size: 13px;
+    color: var(--muted, #8b949e);
+    padding: 10px 0;
+}
+.bd-row {
+    padding: 10px 0;
+    border-top: 1px solid var(--border);
+}
+.bd-row-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+.bd-name {
+    font-weight: 600;
+    font-size: 14px;
+    flex: 1;
+    cursor: pointer;
+    color: var(--accent-text);
+}
+.bd-unit {
+    font-size: 11px;
+    color: var(--muted, #8b949e);
+}
+.bd-del {
+    width: 26px;
+    height: 26px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--muted, #8b949e);
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+}
+.bd-del:active { background: var(--bg); }
+.bd-cols {
+    display: grid;
+    gap: 8px;
+}
+.bd-row:has(.bd-cols .bd-col:nth-child(2)) .bd-cols { grid-template-columns: 1fr 1fr; }
+.bd-row:has(.bd-cols .bd-col:nth-child(3)) .bd-cols { grid-template-columns: repeat(3, 1fr); }
+.bd-col-label {
+    font-size: 11px;
+    color: var(--muted, #8b949e);
+    margin-bottom: 4px;
+}
+.bd-input {
+    width: 100%;
+    padding: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    text-align: center;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm, 8px);
+    color: var(--fg, inherit);
+}
+.bd-input:focus {
+    border-color: var(--border-focus);
+    outline: none;
+}
+.bd-col-target {
+    font-size: 10px;
+    color: var(--muted, #8b949e);
+    text-align: center;
+    margin-top: 4px;
+}
+.bd-add {
+    width: 100%;
+    margin-top: 12px;
+    padding: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    border: 1px dashed var(--border-focus);
+    border-radius: var(--radius-sm, 8px);
+    background: var(--accent-soft);
+    color: var(--accent-text);
+    cursor: pointer;
+}

@@ -273,7 +273,7 @@ const DB = {
 };
 
 // ==================== STATE ====================
-let currentTab = "hitungan";
+let currentTab = "beranda";
 let calYear = new Date().getFullYear();
 let calMonth = new Date().getMonth();
 let riwayatFilter = "7d";
@@ -284,6 +284,7 @@ let expandedRiwayatIds = new Set();
 
 // Scroll positions
 const scrollPositions = {
+    beranda: 0,
     hitungan: 0,
     riwayat: 0,
     kalender: 0,
@@ -340,6 +341,7 @@ async function refreshApp() {
     saveScrollPosition(currentTab);
     try {
         await Sync.pull();
+        if (currentTab === "beranda") renderBeranda();
         if (currentTab === "hitungan") renderHitungan();
         if (currentTab === "riwayat") renderRiwayat();
         if (currentTab === "kalender") renderKalender();
@@ -468,9 +470,10 @@ function setTab(tab) {
     );
     $$(".page").forEach(el => el.classList.remove("active"));
     $(`#page-${tab}`).classList.add("active");
-    const tabs = ["hitungan", "riwayat", "kalkulator"];
+    const tabs = ["beranda", "hitungan", "riwayat", "kalkulator"];
     const idx = tabs.indexOf(tab);
-    if (idx >= 0) $("#navIndicator").style.left = idx * 33.333 + "%";
+    if (idx >= 0) $("#navIndicator").style.left = idx * 25 + "%";
+    if (tab === "beranda") renderBeranda();
     if (tab === "hitungan") renderHitungan();
     if (tab === "riwayat") renderRiwayat();
     if (tab === "kalender") renderKalender();
@@ -482,7 +485,15 @@ $$(".nav-item").forEach(el => {
     el.addEventListener("click", () => setTab(el.dataset.tab));
 });
 
-let prevTab = "hitungan";
+function refreshCurrentPage() {
+    if (currentTab === "beranda") renderBeranda();
+    if (currentTab === "hitungan") renderHitungan();
+    if (currentTab === "riwayat") renderRiwayat();
+    if (currentTab === "kalender") renderKalender();
+    if (currentTab === "kalkulator") renderKalkulator();
+}
+
+let prevTab = "beranda";
 $("#calBtn").addEventListener("click", () => {
     if (currentTab === "kalender") setTab(prevTab);
     else {
@@ -1275,7 +1286,7 @@ $$(".edit-target-btn", ctx).forEach(btn => {
             Confirm.show(btn, () => {
                 openCards.delete(pid);
                 DB.deleteProduct(pid);
-                renderHitungan();
+                refreshCurrentPage();
             });
         });
     });
@@ -1287,7 +1298,7 @@ $$(".edit-target-btn", ctx).forEach(btn => {
             Confirm.show(btn, () => {
                 openCards.delete(pid);
                 DB.deleteProduct(pid);
-                renderHitungan();
+                refreshCurrentPage();
             });
         });
     });
@@ -1384,8 +1395,8 @@ function refreshSummary(pid) {
 }
 
 // ==================== MODAL TAMBAH PRODUK ====================
-function openAddModal() {
-    $("#inputTanggal").value = today();
+function openAddModal(date) {
+    $("#inputTanggal").value = date || today();
     $("#inputNama").value = "";
     $("#targetSingle").value = "";
     $("#targetBesar").value = "";
@@ -1534,7 +1545,7 @@ $("#btnOk").addEventListener("click", () => {
     // Simpan produk
     DB.addProduct(product);
     closeModal();
-    renderHitungan();
+    refreshCurrentPage();
 });
 
 // ==================== EDIT MODAL ====================
@@ -1914,6 +1925,7 @@ $("#btnEditSimpan").addEventListener("click", () => {
     $("#editModalOverlay").classList.remove("open");
     if (currentTab === "riwayat") renderRiwayat();
     if (currentTab === "kalender") renderKalender();
+    if (currentTab === "beranda") renderBeranda();
     if (currentTab === "hitungan") renderHitungan();
 });
 
@@ -3220,6 +3232,7 @@ async function periodicSync() {
         const changed = await Sync.pull();
         if (changed) {
             saveScrollPosition(currentTab);
+            if (currentTab === "beranda") renderBeranda();
             if (currentTab === "hitungan") renderHitungan();
             if (currentTab === "riwayat") renderRiwayat();
             if (currentTab === "kalender") renderKalender();
@@ -3466,7 +3479,7 @@ if (document.readyState === "loading") {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-    setTab("hitungan");
+    setTab("beranda");
     startPeriodicSync();
     attachAutoHideListener();
 });
