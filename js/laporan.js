@@ -24,24 +24,7 @@ function lpColsHtml(p) {
         .join("");
 }
 
-function lpTimSection(rows) {
-    if (!rows.some(p => p.sample)) return "";
-    const tt = LaporanCore.timTotals(rows);
-    const rowsHtml = tt
-        .map(t => `
-            <div class="lp-tim-row">
-                <span class="lp-tim-label">${t.label}</span>
-                <span class="lp-tim-val">${fmtBerat(t.berat)} kg</span>
-                <span class="lp-tim-val">${t.porsi > 0 ? fmtPorsi(t.porsi) + " porsi" : "–"}</span>
-            </div>`)
-        .join("");
-    return `<div class="lp-section">
-        <div class="lp-section-title">Timbangan per Kategori</div>
-        <div class="lp-tim-grid">${rowsHtml}</div>
-    </div>`;
-}
-
-function lpStatsHtml(stats) {
+function lpStatsHtml(stats, rows) {
     let h = "";
     for (const p of stats.products) {
         const pct = p.pencapaian === null
@@ -55,13 +38,17 @@ function lpStatsHtml(stats) {
                 ${p.target > 0 ? `<div class="lp-stat"><div class="lp-stat-label">Target</div><div class="lp-stat-val">${formatNumberForDisplay(p.target)} ${p.unit}</div></div>` : ""}
                 ${stats.days > 1 ? `<div class="lp-stat"><div class="lp-stat-label">Rata-rata/hari</div><div class="lp-stat-val">${formatNumberForDisplay(p.perHari)} ${p.unit}</div></div>` : ""}
             </div>`;
+        if (p.sample) {
+            const productRows = rows.filter(r => r.name === p.name);
+            const tt = LaporanCore.timTotals(productRows);
+            h += `<div class="lp-tim-grid">` + tt.map(t => `
+                <div class="lp-tim-row">
+                    <span class="lp-tim-label">${t.label}</span>
+                    <span class="lp-tim-val">${fmtBerat(t.berat)} kg</span>
+                    <span class="lp-tim-val">${t.porsi > 0 ? fmtPorsi(t.porsi) + " porsi" : "–"}</span>
+                </div>`).join("") + `</div>`;
+        }
     }
-    h += `
-        <div class="lp-section"><div class="lp-section-title">Ringkasan</div></div>
-        <div class="lp-stats-grid">
-            <div class="lp-stat"><div class="lp-stat-label">Produk</div><div class="lp-stat-val">${stats.uniqueProducts}</div></div>
-            <div class="lp-stat"><div class="lp-stat-label">Hari</div><div class="lp-stat-val">${stats.days}</div></div>
-        </div>`;
     return h;
 }
 
@@ -139,8 +126,7 @@ function renderLaporanBody() {
     if (!body) return;
     body.innerHTML = `
         <div class="lp-period-label">${range.label}</div>
-        ${lpStatsHtml(stats)}
-        ${lpTimSection(rows)}
+        ${lpStatsHtml(stats, rows)}
         <div class="lp-section"><div class="lp-section-title">Daftar Harian</div></div>
         ${lpGroupsHtml(groups)}`;
 }
@@ -268,20 +254,21 @@ $("#laporanBtn").addEventListener("click", () => {
 const LP_IMG = { bg: "#f8fafc", text: "#0f172a", muted: "#64748b", accent: "#388bfd", barBg: "#e2e8f0", cardBg: "#ffffff", border: "#e2e8f0" };
 const lpClip = (s, n) => (s.length > n ? s.slice(0, n) + "…" : s);
 
-function lpExportHeight(stats, groups, hasTim) {
+function lpExportHeight(stats, groups) {
     let h = 150; // title + label
-    h += stats.products.length * (28 + 76 + 12); // section header + stat grid per product
-    h += 28 + 76 + 12; // ringkasan
-    if (hasTim) h += 40 + 5 * 30;
+    for (const p of stats.products) {
+        h += 28 + 76 + 12; // section header + stat grid
+        if (p.sample) h += 5 * 30 + 8; // timbangan rows
+    }
     for (const g of groups) h += 50 + g.items.length * 72;
     return Math.max(h + 40, 480);
 }
 
 function exportLaporanImage() {
     const { range, stats, groups } = lpReportData();
-    const hasTim = groups.some(g => g.items.some(p => p.sample));
+    const allRows = groups.flatMap(g => g.items);
     const W = 1080;
-    const H = lpExportHeight(stats, groups, hasTim);
+    const H = lpExportHeight(stats, groups);
     const canvas = document.createElement("canvas");
     canvas.width = W;
     canvas.height = H;
@@ -329,29 +316,18 @@ function exportLaporanImage() {
             drawStatBox(label, val, pad + col * (boxW + 12), y + (col === 0 && i > 0 ? boxH + 12 : 0));
         });
         y += boxH + 12;
-    }
-
-    text("RINGKASAN", pad, y, 18, 700, LP_IMG.muted);
-    y += 28;
-    [["Produk", String(stats.uniqueProducts)], ["Hari", String(stats.days)]].forEach(([label, val], i) => {
-        drawStatBox(label, val, pad + i * (boxW + 12), y);
-    });
-    y += boxH + 20;
-
-    // --- timbangan per kategori ---
-    if (hasTim) {
-        text("TIMBANGAN PER KATEGORI", pad, y, 18, 700, LP_IMG.muted);
-        y += 32;
-        const tt = LaporanCore.timTotals(groups.flatMap(g => g.items));
-        for (const t of tt) {
-            ctx.fillStyle = LP_IMG.barBg;
-            ctx.fillRect(pad + 240, y - 14, W - pad * 2 - 240, 1);
-            text(t.label, pad, y + 4, 19, 600);
-            text(fmtBerat(t.berat) + " kg", W - pad - 140, y + 4, 19, 700, LP_IMG.text, "right");
-            text(t.porsi > 0 ? fmtPorsi(t.porsi) + " porsi" : "–", W - pad, y + 4, 19, 700, LP_IMG.accent, "right");
-            y += 30;
+        if (p.sample) {
+            const tt = LaporanCore.timTotals(allRows.filter(r => r.name === p.name));
+            for (const t of tt) {
+                ctx.fillStyle = LP_IMG.barBg;
+                ctx.fillRect(pad + 240, y - 14, W - pad * 2 - 240, 1);
+                text(t.label, pad, y + 4, 19, 600);
+                text(fmtBerat(t.berat) + " kg", W - pad - 140, y + 4, 19, 700, LP_IMG.text, "right");
+                text(t.porsi > 0 ? fmtPorsi(t.porsi) + " porsi" : "–", W - pad, y + 4, 19, 700, LP_IMG.accent, "right");
+                y += 30;
+            }
+            y += 8;
         }
-        y += 8;
     }
 
     // --- daftar harian ---
