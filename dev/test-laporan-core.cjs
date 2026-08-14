@@ -69,8 +69,6 @@ assert.strictEqual(st.totalProduksi, 49.25);
 assert.strictEqual(st.totalTarget, 30);
 assert.strictEqual(st.pencapaian, 164);
 assert.strictEqual(st.perHari, 24.63);
-assert.deepStrictEqual(st.topProducts.map(t => t.name), ["Ayam Geprek", "Dimsum", "Nasi Goreng"]);
-assert.strictEqual(st.topProducts[0].total, 23);
 
 const stNoTarget = C.aggregateStats([tim], 1);
 assert.strictEqual(stNoTarget.pencapaian, null);

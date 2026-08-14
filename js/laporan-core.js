@@ -120,20 +120,6 @@
         const unique = new Set(rows.map(r => r.name));
         const totalProduksi = rows.reduce((s, p) => s + productTotal(p), 0);
         const totalTarget = rows.reduce((s, p) => s + productTarget(p), 0);
-        const byName = {};
-        rows.forEach(p => {
-            if (!byName[p.name]) byName[p.name] = { name: p.name, total: 0, days: new Set() };
-            byName[p.name].total += productTotal(p);
-            byName[p.name].days.add(p.date);
-        });
-        const topProducts = Object.values(byName)
-            .map(o => ({
-                name: o.name,
-                total: Math.round(o.total * 100) / 100,
-                days: o.days.size
-            }))
-            .sort((a, b) => b.total - a.total)
-            .slice(0, 5);
         const total = Math.round(totalProduksi * 100) / 100;
         const target = Math.round(totalTarget * 100) / 100;
         return {
@@ -142,8 +128,7 @@
             totalProduksi: total,
             totalTarget: target,
             pencapaian: target > 0 ? Math.round((total / target) * 100) : null,
-            perHari: days > 0 ? Math.round((total / days) * 100) / 100 : total,
-            topProducts
+            perHari: days > 0 ? Math.round((total / days) * 100) / 100 : total
         };
     }
 

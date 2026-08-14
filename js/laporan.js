@@ -57,22 +57,6 @@ function lpStatsHtml(stats) {
         </div>`;
 }
 
-function lpTopHtml(top) {
-    if (!top.length) return "";
-    const max = top[0].total || 1;
-    const bars = top
-        .map(t => `
-            <div class="lp-top-row">
-                <div class="lp-top-name">${esc(t.name)} <span class="lp-top-days">(${t.days} hari)</span></div>
-                <div class="lp-top-bar-wrap">
-                    <div class="lp-top-bar" style="width:${Math.round((t.total / max) * 100)}%"></div>
-                </div>
-                <div class="lp-top-val">${formatNumberForDisplay(t.total)}</div>
-            </div>`)
-        .join("");
-    return `<div class="lp-section"><div class="lp-section-title">Produk Teratas</div>${bars}</div>`;
-}
-
 function lpGroupsHtml(groups) {
     if (!groups.length) return '<div class="lp-empty">Tidak ada data pada periode ini.</div>';
     return groups
@@ -143,7 +127,6 @@ function renderLaporanBody() {
         <div class="lp-period-label">${range.label}</div>
         ${lpStatsHtml(stats)}
         ${lpTimSection(rows)}
-        ${lpTopHtml(stats.topProducts)}
         <div class="lp-section"><div class="lp-section-title">Daftar Harian</div></div>
         ${lpGroupsHtml(groups)}`;
 }
@@ -275,7 +258,6 @@ function lpExportHeight(stats, groups, hasTim) {
     let h = 150; // title + label
     h += 96; // stats grid
     if (hasTim) h += 40 + 5 * 30;
-    if (stats.topProducts.length) h += 40 + stats.topProducts.length * 44;
     for (const g of groups) h += 50 + g.items.length * 72;
     return Math.max(h + 40, 480);
 }
@@ -344,29 +326,6 @@ function exportLaporanImage() {
             y += 30;
         }
         y += 8;
-    }
-
-    // --- produk teratas ---
-    if (stats.topProducts.length) {
-        text("PRODUK TERATAS", pad, y, 18, 700, LP_IMG.muted);
-        y += 32;
-        const max = stats.topProducts[0].total || 1;
-        for (const t of stats.topProducts) {
-            const barW = (W - pad * 2 - 240);
-            ctx.fillStyle = LP_IMG.barBg;
-            ctx.beginPath();
-            ctx.roundRect(pad + 240, y - 20, barW, 12, 6);
-            ctx.fill();
-            ctx.fillStyle = LP_IMG.accent;
-            const w = Math.max((t.total / max) * barW, 8);
-            ctx.beginPath();
-            ctx.roundRect(pad + 240, y - 20, w, 12, 6);
-            ctx.fill();
-            text(lpClip(t.name, 30), pad, y + 4, 20, 600);
-            text(formatNumberForDisplay(t.total), W - pad, y + 4, 20, 700, LP_IMG.text, "right");
-            y += 44;
-        }
-        y += 12;
     }
 
     // --- daftar harian ---

@@ -2741,9 +2741,6 @@ html.light .icon-moon {
 /* ==================== LAPORAN ==================== */
 #page-laporan { overflow-y: auto; padding-bottom: 90px; }
 .lp-toolbar {
-    position: sticky;
-    top: 0;
-    z-index: 5;
     padding: 12px;
     background: var(--bg);
     border-bottom: 1px solid var(--border);
@@ -2885,39 +2882,6 @@ html.light .icon-moon {
     font-family: var(--mono);
     text-align: right;
     min-width: 90px;
-}
-.lp-top-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 8px;
-}
-.lp-top-name {
-    width: 38%;
-    font-size: 12px;
-    font-weight: 600;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.lp-top-days { font-weight: 400; color: var(--text-muted); }
-.lp-top-bar-wrap {
-    flex: 1;
-    height: 8px;
-    background: var(--bg-card);
-    border-radius: 999px;
-    overflow: hidden;
-}
-.lp-top-bar {
-    height: 100%;
-    background: var(--accent);
-    border-radius: 999px;
-}
-.lp-top-val {
-    width: 15%;
-    font-size: 12px;
-    font-weight: 700;
-    text-align: right;
 }
 .lp-day {
     margin-bottom: 12px;
