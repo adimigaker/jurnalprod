@@ -43,32 +43,17 @@ function lpTimSection(rows) {
 
 function lpStatsHtml(stats) {
     let h = "";
-    if (stats.pcs.target > 0) {
-        const pct = stats.pcs.pencapaian === null
-            ? '<span class="lp-stat-val">—</span>'
-            : `<span class="lp-stat-val ${stats.pcs.pencapaian >= 100 ? "lp-ok" : "lp-kurang"}">${stats.pcs.pencapaian}%</span>`;
+    for (const p of stats.products) {
+        const pct = p.pencapaian === null
+            ? ""
+            : ` · ${p.pencapaian >= 100 ? "✓" : p.pencapaian + "%"}`;
+        const subtitle = p.unit + pct;
         h += `
-            <div class="lp-section"><div class="lp-section-title">Single / Split (pcs)</div></div>
+            <div class="lp-section"><div class="lp-section-title">${esc(p.name)} <span style="font-weight:400;text-transform:none;letter-spacing:0">(${subtitle})</span></div></div>
             <div class="lp-stats-grid">
-                <div class="lp-stat"><div class="lp-stat-label">Total Produksi</div><div class="lp-stat-val">${formatNumberForDisplay(stats.pcs.total)}</div></div>
-                <div class="lp-stat"><div class="lp-stat-label">Target</div><div class="lp-stat-val">${formatNumberForDisplay(stats.pcs.target)}</div></div>
-                <div class="lp-stat"><div class="lp-stat-label">Pencapaian</div>${pct}</div>
-                ${stats.days > 1 ? `<div class="lp-stat"><div class="lp-stat-label">Rata-rata/hari</div><div class="lp-stat-val">${formatNumberForDisplay(stats.pcs.perHari)}</div></div>` : ""}
-            </div>`;
-    } else if (stats.pcs.total > 0) {
-        h += `
-            <div class="lp-section"><div class="lp-section-title">Single / Split (pcs)</div></div>
-            <div class="lp-stats-grid">
-                <div class="lp-stat"><div class="lp-stat-label">Total Produksi</div><div class="lp-stat-val">${formatNumberForDisplay(stats.pcs.total)}</div></div>
-                ${stats.days > 1 ? `<div class="lp-stat"><div class="lp-stat-label">Rata-rata/hari</div><div class="lp-stat-val">${formatNumberForDisplay(stats.pcs.perHari)}</div></div>` : ""}
-            </div>`;
-    }
-    if (stats.kg.total > 0) {
-        h += `
-            <div class="lp-section"><div class="lp-section-title">Timbangan (kg)</div></div>
-            <div class="lp-stats-grid">
-                <div class="lp-stat"><div class="lp-stat-label">Total Produksi</div><div class="lp-stat-val">${formatNumberForDisplay(stats.kg.total)}</div></div>
-                ${stats.days > 1 ? `<div class="lp-stat"><div class="lp-stat-label">Rata-rata/hari</div><div class="lp-stat-val">${formatNumberForDisplay(stats.kg.perHari)}</div></div>` : ""}
+                <div class="lp-stat"><div class="lp-stat-label">Total Produksi</div><div class="lp-stat-val">${formatNumberForDisplay(p.total)} ${p.unit}</div></div>
+                ${p.target > 0 ? `<div class="lp-stat"><div class="lp-stat-label">Target</div><div class="lp-stat-val">${formatNumberForDisplay(p.target)} ${p.unit}</div></div>` : ""}
+                ${stats.days > 1 ? `<div class="lp-stat"><div class="lp-stat-label">Rata-rata/hari</div><div class="lp-stat-val">${formatNumberForDisplay(p.perHari)} ${p.unit}</div></div>` : ""}
             </div>`;
     }
     h += `
@@ -285,11 +270,8 @@ const lpClip = (s, n) => (s.length > n ? s.slice(0, n) + "…" : s);
 
 function lpExportHeight(stats, groups, hasTim) {
     let h = 150; // title + label
-    let statRows = 0;
-    if (stats.pcs.target > 0 || stats.pcs.total > 0) statRows += 1;
-    if (stats.kg.total > 0) statRows += 1;
-    statRows += 1; // ringkasan
-    h += statRows * (76 + 12) + 40; // section headers + grids
+    h += stats.products.length * (28 + 76 + 12); // section header + stat grid per product
+    h += 28 + 76 + 12; // ringkasan
     if (hasTim) h += 40 + 5 * 30;
     for (const g of groups) h += 50 + g.items.length * 72;
     return Math.max(h + 40, 480);
@@ -319,7 +301,7 @@ function exportLaporanImage() {
     text("Laporan Produksi", pad, 70, 40, 700);
     text(range.label, pad, 104, 22, 400, LP_IMG.muted);
 
-    // --- statistik ---
+    // --- statistik per produk ---
     const boxW = (W - pad * 2 - 24) / 3;
     const boxH = 76;
     let y = 140;
@@ -333,29 +315,18 @@ function exportLaporanImage() {
         text(val, x + 14, yy + 60, 24, 700);
     };
 
-    if (stats.pcs.target > 0 || stats.pcs.total > 0) {
-        text("SINGLE / SPLIT (pcs)", pad, y, 18, 700, LP_IMG.muted);
+    for (const p of stats.products) {
+        const pct = p.pencapaian === null ? "" : ` · ${p.pencapaian}%`;
+        text(`${p.name.toUpperCase()} (${p.unit}${pct})`, pad, y, 18, 700, LP_IMG.muted);
         y += 28;
-        const pcsItems = [
-            ["Total Produksi", formatNumberForDisplay(stats.pcs.total)],
-            ["Target", formatNumberForDisplay(stats.pcs.target)],
-            ["Pencapaian", stats.pcs.pencapaian === null ? "—" : stats.pcs.pencapaian + "%"],
+        const items = [
+            ["Total Produksi", `${formatNumberForDisplay(p.total)} ${p.unit}`],
         ];
-        if (stats.days > 1) pcsItems.push(["Rata-rata/hari", formatNumberForDisplay(stats.pcs.perHari)]);
-        pcsItems.forEach(([label, val], i) => {
+        if (p.target > 0) items.push(["Target", `${formatNumberForDisplay(p.target)} ${p.unit}`]);
+        if (stats.days > 1) items.push(["Rata-rata/hari", `${formatNumberForDisplay(p.perHari)} ${p.unit}`]);
+        items.forEach(([label, val], i) => {
             const col = i % 3;
             drawStatBox(label, val, pad + col * (boxW + 12), y + (col === 0 && i > 0 ? boxH + 12 : 0));
-        });
-        y += boxH + 12;
-    }
-
-    if (stats.kg.total > 0) {
-        text("TIMBANGAN (kg)", pad, y, 18, 700, LP_IMG.muted);
-        y += 28;
-        const kgItems = [["Total Produksi", formatNumberForDisplay(stats.kg.total)]];
-        if (stats.days > 1) kgItems.push(["Rata-rata/hari", formatNumberForDisplay(stats.kg.perHari)]);
-        kgItems.forEach(([label, val], i) => {
-            drawStatBox(label, val, pad + i * (boxW + 12), y);
         });
         y += boxH + 12;
     }

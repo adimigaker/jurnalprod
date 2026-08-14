@@ -117,28 +117,27 @@
     }
 
     function aggregateStats(rows, days) {
-        const unique = new Set(rows.map(r => r.name));
-        const pcsRows = rows.filter(r => !r.sample);
-        const kgRows = rows.filter(r => r.sample);
+        const byName = {};
+        rows.forEach(p => {
+            if (!byName[p.name]) byName[p.name] = { name: p.name, sample: p.sample, rows: [] };
+            byName[p.name].rows.push(p);
+        });
 
-        const pcsTotal = Math.round(pcsRows.reduce((s, p) => s + productTotal(p), 0) * 100) / 100;
-        const pcsTarget = Math.round(pcsRows.reduce((s, p) => s + productTarget(p), 0) * 100) / 100;
-        const kgTotal = Math.round(kgRows.reduce((s, p) => s + productTotal(p), 0) * 100) / 100;
+        const products = Object.values(byName).map(entry => {
+            const total = Math.round(entry.rows.reduce((s, p) => s + productTotal(p), 0) * 100) / 100;
+            const target = Math.round(entry.rows.reduce((s, p) => s + productTarget(p), 0) * 100) / 100;
+            return {
+                name: entry.name,
+                sample: entry.sample,
+                unit: entry.sample ? "kg" : "pcs",
+                total,
+                target,
+                pencapaian: target > 0 ? Math.round((total / target) * 100) : null,
+                perHari: days > 0 ? Math.round((total / days) * 100) / 100 : total
+            };
+        });
 
-        return {
-            days,
-            uniqueProducts: unique.size,
-            pcs: {
-                total: pcsTotal,
-                target: pcsTarget,
-                pencapaian: pcsTarget > 0 ? Math.round((pcsTotal / pcsTarget) * 100) : null,
-                perHari: days > 0 ? Math.round((pcsTotal / days) * 100) / 100 : pcsTotal
-            },
-            kg: {
-                total: kgTotal,
-                perHari: days > 0 ? Math.round((kgTotal / days) * 100) / 100 : kgTotal
-            }
-        };
+        return { days, uniqueProducts: products.length, products };
     }
 
     function groupByDate(rows) {
