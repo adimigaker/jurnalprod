@@ -42,29 +42,57 @@ function lpTimSection(rows) {
 }
 
 function lpStatsHtml(stats) {
-    const pct =
-        stats.pencapaian === null
+    let h = "";
+    if (stats.pcs.target > 0) {
+        const pct = stats.pcs.pencapaian === null
             ? '<span class="lp-stat-val">—</span>'
-            : `<span class="lp-stat-val ${stats.pencapaian >= 100 ? "lp-ok" : "lp-kurang"}">${stats.pencapaian}%</span>`;
-    return `
+            : `<span class="lp-stat-val ${stats.pcs.pencapaian >= 100 ? "lp-ok" : "lp-kurang"}">${stats.pcs.pencapaian}%</span>`;
+        h += `
+            <div class="lp-section"><div class="lp-section-title">Single / Split (pcs)</div></div>
+            <div class="lp-stats-grid">
+                <div class="lp-stat"><div class="lp-stat-label">Total Produksi</div><div class="lp-stat-val">${formatNumberForDisplay(stats.pcs.total)}</div></div>
+                <div class="lp-stat"><div class="lp-stat-label">Target</div><div class="lp-stat-val">${formatNumberForDisplay(stats.pcs.target)}</div></div>
+                <div class="lp-stat"><div class="lp-stat-label">Pencapaian</div>${pct}</div>
+                ${stats.days > 1 ? `<div class="lp-stat"><div class="lp-stat-label">Rata-rata/hari</div><div class="lp-stat-val">${formatNumberForDisplay(stats.pcs.perHari)}</div></div>` : ""}
+            </div>`;
+    } else if (stats.pcs.total > 0) {
+        h += `
+            <div class="lp-section"><div class="lp-section-title">Single / Split (pcs)</div></div>
+            <div class="lp-stats-grid">
+                <div class="lp-stat"><div class="lp-stat-label">Total Produksi</div><div class="lp-stat-val">${formatNumberForDisplay(stats.pcs.total)}</div></div>
+                ${stats.days > 1 ? `<div class="lp-stat"><div class="lp-stat-label">Rata-rata/hari</div><div class="lp-stat-val">${formatNumberForDisplay(stats.pcs.perHari)}</div></div>` : ""}
+            </div>`;
+    }
+    if (stats.kg.total > 0) {
+        h += `
+            <div class="lp-section"><div class="lp-section-title">Timbangan (kg)</div></div>
+            <div class="lp-stats-grid">
+                <div class="lp-stat"><div class="lp-stat-label">Total Produksi</div><div class="lp-stat-val">${formatNumberForDisplay(stats.kg.total)}</div></div>
+                ${stats.days > 1 ? `<div class="lp-stat"><div class="lp-stat-label">Rata-rata/hari</div><div class="lp-stat-val">${formatNumberForDisplay(stats.kg.perHari)}</div></div>` : ""}
+            </div>`;
+    }
+    h += `
+        <div class="lp-section"><div class="lp-section-title">Ringkasan</div></div>
         <div class="lp-stats-grid">
-            <div class="lp-stat"><div class="lp-stat-label">Total Produksi</div><div class="lp-stat-val">${formatNumberForDisplay(stats.totalProduksi)}</div></div>
-            <div class="lp-stat"><div class="lp-stat-label">Target</div><div class="lp-stat-val">${formatNumberForDisplay(stats.totalTarget)}</div></div>
-            <div class="lp-stat"><div class="lp-stat-label">Pencapaian</div>${pct}</div>
             <div class="lp-stat"><div class="lp-stat-label">Produk</div><div class="lp-stat-val">${stats.uniqueProducts}</div></div>
-            ${stats.days > 1 ? `<div class="lp-stat"><div class="lp-stat-label">Rata-rata/hari</div><div class="lp-stat-val">${formatNumberForDisplay(stats.perHari)}</div></div>` : ""}
             <div class="lp-stat"><div class="lp-stat-label">Hari</div><div class="lp-stat-val">${stats.days}</div></div>
         </div>`;
+    return h;
 }
 
 function lpGroupsHtml(groups) {
     if (!groups.length) return '<div class="lp-empty">Tidak ada data pada periode ini.</div>';
     return groups
-        .map(g => `
+        .map(g => {
+            const totals = [];
+            if (g.dayPcs > 0) totals.push(formatNumberForDisplay(g.dayPcs) + " pcs");
+            if (g.dayKg > 0) totals.push(formatNumberForDisplay(g.dayKg) + " kg");
+            const totalStr = totals.join(" · ") || "—";
+            return `
             <div class="lp-day">
                 <div class="lp-day-head">
                     <span class="lp-day-label">${g.label}</span>
-                    <span class="lp-day-total">${formatNumberForDisplay(g.dayTotal)}</span>
+                    <span class="lp-day-total">${totalStr}</span>
                 </div>
                 ${g.items
                     .map(p => `
@@ -78,7 +106,8 @@ function lpGroupsHtml(groups) {
                             ${p.note ? `<div class="lp-note">${esc(p.note)}</div>` : ""}
                         </div>`)
                     .join("")}
-            </div>`)
+            </div>`;
+        })
         .join("");
 }
 
@@ -256,7 +285,11 @@ const lpClip = (s, n) => (s.length > n ? s.slice(0, n) + "…" : s);
 
 function lpExportHeight(stats, groups, hasTim) {
     let h = 150; // title + label
-    h += 96; // stats grid
+    let statRows = 0;
+    if (stats.pcs.target > 0 || stats.pcs.total > 0) statRows += 1;
+    if (stats.kg.total > 0) statRows += 1;
+    statRows += 1; // ringkasan
+    h += statRows * (76 + 12) + 40; // section headers + grids
     if (hasTim) h += 40 + 5 * 30;
     for (const g of groups) h += 50 + g.items.length * 72;
     return Math.max(h + 40, 480);
@@ -289,28 +322,50 @@ function exportLaporanImage() {
     // --- statistik ---
     const boxW = (W - pad * 2 - 24) / 3;
     const boxH = 76;
-    const items = [
-        ["Total Produksi", formatNumberForDisplay(stats.totalProduksi)],
-        ["Target", formatNumberForDisplay(stats.totalTarget)],
-        ["Pencapaian", stats.pencapaian === null ? "—" : stats.pencapaian + "%"],
-        ["Produk", String(stats.uniqueProducts)],
-        ["Rata-rata/hari", stats.days > 1 ? formatNumberForDisplay(stats.perHari) : "—"],
-        ["Hari", String(stats.days)]
-    ];
-    items.forEach(([label, val], i) => {
-        const col = i % 3;
-        const row = Math.floor(i / 3);
-        const x = pad + col * (boxW + 12);
-        const y = 140 + row * (boxH + 12);
+    let y = 140;
+
+    const drawStatBox = (label, val, x, yy) => {
         ctx.fillStyle = LP_IMG.cardBg;
         ctx.beginPath();
-        ctx.roundRect(x, y, boxW, boxH, 12);
+        ctx.roundRect(x, yy, boxW, boxH, 12);
         ctx.fill();
-        text(label, x + 14, y + 28, 17, 400, LP_IMG.muted);
-        text(val, x + 14, y + 60, 24, 700);
-    });
+        text(label, x + 14, yy + 28, 17, 400, LP_IMG.muted);
+        text(val, x + 14, yy + 60, 24, 700);
+    };
 
-    let y = 140 + Math.ceil(items.length / 3) * (boxH + 12) + 8;
+    if (stats.pcs.target > 0 || stats.pcs.total > 0) {
+        text("SINGLE / SPLIT (pcs)", pad, y, 18, 700, LP_IMG.muted);
+        y += 28;
+        const pcsItems = [
+            ["Total Produksi", formatNumberForDisplay(stats.pcs.total)],
+            ["Target", formatNumberForDisplay(stats.pcs.target)],
+            ["Pencapaian", stats.pcs.pencapaian === null ? "—" : stats.pcs.pencapaian + "%"],
+        ];
+        if (stats.days > 1) pcsItems.push(["Rata-rata/hari", formatNumberForDisplay(stats.pcs.perHari)]);
+        pcsItems.forEach(([label, val], i) => {
+            const col = i % 3;
+            drawStatBox(label, val, pad + col * (boxW + 12), y + (col === 0 && i > 0 ? boxH + 12 : 0));
+        });
+        y += boxH + 12;
+    }
+
+    if (stats.kg.total > 0) {
+        text("TIMBANGAN (kg)", pad, y, 18, 700, LP_IMG.muted);
+        y += 28;
+        const kgItems = [["Total Produksi", formatNumberForDisplay(stats.kg.total)]];
+        if (stats.days > 1) kgItems.push(["Rata-rata/hari", formatNumberForDisplay(stats.kg.perHari)]);
+        kgItems.forEach(([label, val], i) => {
+            drawStatBox(label, val, pad + i * (boxW + 12), y);
+        });
+        y += boxH + 12;
+    }
+
+    text("RINGKASAN", pad, y, 18, 700, LP_IMG.muted);
+    y += 28;
+    [["Produk", String(stats.uniqueProducts)], ["Hari", String(stats.days)]].forEach(([label, val], i) => {
+        drawStatBox(label, val, pad + i * (boxW + 12), y);
+    });
+    y += boxH + 20;
 
     // --- timbangan per kategori ---
     if (hasTim) {
@@ -337,7 +392,10 @@ function exportLaporanImage() {
         ctx.roundRect(pad, y, W - pad * 2, 46, 10);
         ctx.fill();
         text(g.label, pad + 16, y + 29, 18, 700);
-        text(formatNumberForDisplay(g.dayTotal), W - pad - 16, y + 29, 18, 700, LP_IMG.accent, "right");
+        const dayTotals = [];
+        if (g.dayPcs > 0) dayTotals.push(formatNumberForDisplay(g.dayPcs) + " pcs");
+        if (g.dayKg > 0) dayTotals.push(formatNumberForDisplay(g.dayKg) + " kg");
+        text(dayTotals.join(" · ") || "—", W - pad - 16, y + 29, 18, 700, LP_IMG.accent, "right");
         y += 46;
         for (const p of g.items) {
             const ih = p.note ? 68 : 50;

@@ -65,18 +65,22 @@ assert.deepStrictEqual(C.filterProducts(rows, { from: "2026-08-13", to: "2026-08
 const st = C.aggregateStats(rows, 2);
 assert.strictEqual(st.days, 2);
 assert.strictEqual(st.uniqueProducts, 3);
-assert.strictEqual(st.totalProduksi, 49.25);
-assert.strictEqual(st.totalTarget, 30);
-assert.strictEqual(st.pencapaian, 164);
-assert.strictEqual(st.perHari, 24.63);
+assert.strictEqual(st.pcs.total, 43);
+assert.strictEqual(st.pcs.target, 30);
+assert.strictEqual(st.pcs.pencapaian, 143);
+assert.strictEqual(st.pcs.perHari, 21.5);
+assert.strictEqual(st.kg.total, 6.25);
+assert.strictEqual(st.kg.perHari, 3.13);
 
 const stNoTarget = C.aggregateStats([tim], 1);
-assert.strictEqual(stNoTarget.pencapaian, null);
+assert.strictEqual(stNoTarget.pcs.pencapaian, null);
+assert.strictEqual(stNoTarget.kg.total, 6.25);
 
 // --- groupByDate ---
 const g = C.groupByDate([dimsum, ayam, tim]);
 assert.deepStrictEqual(g.map(x => x.date), ["2026-08-14", "2026-08-13"]);
-assert.strictEqual(g[1].dayTotal, 43);
+assert.strictEqual(g[1].dayPcs, 43);
+assert.strictEqual(g[1].dayKg, 0);
 assert.strictEqual(g[1].items.length, 2);
 
 console.log("OK — semua tes lulus");

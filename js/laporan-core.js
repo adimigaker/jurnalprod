@@ -118,17 +118,26 @@
 
     function aggregateStats(rows, days) {
         const unique = new Set(rows.map(r => r.name));
-        const totalProduksi = rows.reduce((s, p) => s + productTotal(p), 0);
-        const totalTarget = rows.reduce((s, p) => s + productTarget(p), 0);
-        const total = Math.round(totalProduksi * 100) / 100;
-        const target = Math.round(totalTarget * 100) / 100;
+        const pcsRows = rows.filter(r => !r.sample);
+        const kgRows = rows.filter(r => r.sample);
+
+        const pcsTotal = Math.round(pcsRows.reduce((s, p) => s + productTotal(p), 0) * 100) / 100;
+        const pcsTarget = Math.round(pcsRows.reduce((s, p) => s + productTarget(p), 0) * 100) / 100;
+        const kgTotal = Math.round(kgRows.reduce((s, p) => s + productTotal(p), 0) * 100) / 100;
+
         return {
             days,
             uniqueProducts: unique.size,
-            totalProduksi: total,
-            totalTarget: target,
-            pencapaian: target > 0 ? Math.round((total / target) * 100) : null,
-            perHari: days > 0 ? Math.round((total / days) * 100) / 100 : total
+            pcs: {
+                total: pcsTotal,
+                target: pcsTarget,
+                pencapaian: pcsTarget > 0 ? Math.round((pcsTotal / pcsTarget) * 100) : null,
+                perHari: days > 0 ? Math.round((pcsTotal / days) * 100) / 100 : pcsTotal
+            },
+            kg: {
+                total: kgTotal,
+                perHari: days > 0 ? Math.round((kgTotal / days) * 100) / 100 : kgTotal
+            }
         };
     }
 
@@ -141,14 +150,20 @@
         return Object.keys(map)
             .sort()
             .reverse()
-            .map(date => ({
-                date,
-                label: fmtLong(date),
-                items: map[date],
-                dayTotal: Math.round(
-                    map[date].reduce((s, p) => s + productTotal(p), 0) * 100
-                ) / 100
-            }));
+            .map(date => {
+                const items = map[date];
+                return {
+                    date,
+                    label: fmtLong(date),
+                    items,
+                    dayPcs: Math.round(
+                        items.filter(p => !p.sample).reduce((s, p) => s + productTotal(p), 0) * 100
+                    ) / 100,
+                    dayKg: Math.round(
+                        items.filter(p => p.sample).reduce((s, p) => s + productTotal(p), 0) * 100
+                    ) / 100
+                };
+            });
     }
 
     const core = {
