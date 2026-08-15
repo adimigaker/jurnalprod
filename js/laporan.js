@@ -281,7 +281,7 @@ function lpColLines(p, maxW) {
 
 function lpExportHeight(stats, groups) {
     const maxW = 1080 - 48 * 2 - 56;
-    let h = 248; // title + label + divider + jarak awal
+    let h = 376; // title + label + divider + jarak awal
     for (const p of stats.products) {
         h += 28 + 136 + 72; // section header + stat grid + gap
         if (p.sample) h += 5 * 52 + 72; // timbangan rows
@@ -320,11 +320,11 @@ function exportLaporanImage() {
     text("Laporan Produksi", pad, 124, 72, 700);
     text(range.label, pad, 184, 40, 400, LP_IMG.muted);
     ctx.fillStyle = LP_IMG.border;
-    ctx.fillRect(pad, 206, W - pad * 2, 1);
+    ctx.fillRect(pad, 250, W - pad * 2, 4);
 
     // --- statistik per produk ---
     const boxH = 136;
-    let y = 248;
+    let y = 376;
 
     const drawStatBox = (label, val, x, yy, w) => {
         ctx.fillStyle = LP_IMG.cardBg;
