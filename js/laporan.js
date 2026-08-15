@@ -19,7 +19,7 @@ function lpColsHtml(p) {
             }
             const target = LaporanCore.colTarget(p, k);
             const tgt = !target ? "" : ` / ${formatNumberForDisplay(target)}`;
-            return `<span class="lp-cols-item">${labels[k]} ${formatNumberForDisplay(total)}${tgt}</span>`;
+            return `<span class="lp-cols-item">${labels[k]} ${formatNumberForDisplay(total)}${tgt} ${p.unit}</span>`;
         })
         .join("");
 }
@@ -351,7 +351,14 @@ function exportLaporanImage() {
             text("• " + lpClip(p.name, 26), pad + 28, y + 44, 32, 600);
             text(`${formatNumberForDisplay(LaporanCore.productTotal(p))} ${p.unit}`, W - pad - 28, y + 44, 32, 700, LP_IMG.text, "right");
             const cols = LaporanCore.colKeys(p)
-                .map(k => `${LaporanCore.colLabels(p)[k]} ${formatNumberForDisplay(LaporanCore.colTotal(p, k))}`)
+                .map(k => {
+                    const total = LaporanCore.colTotal(p, k);
+                    if (p.sample) {
+                        const c = p.containers[k] || {};
+                        return `${LaporanCore.colLabels(p)[k]} ${fmtBerat(total)} kg${c.porsi ? ` · ${fmtPorsi(c.porsi)} porsi` : ""}`;
+                    }
+                    return `${LaporanCore.colLabels(p)[k]} ${formatNumberForDisplay(total)} ${p.unit}`;
+                })
                 .join(" · ");
             text(lpClip(cols, 60), pad + 56, y + 88, 28, 400, LP_IMG.muted);
             if (p.note) text(lpClip(p.note, 55), pad + 56, y + 124, 24, 400, LP_IMG.muted);
