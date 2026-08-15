@@ -116,7 +116,7 @@
             });
     }
 
-    function aggregateStats(rows, days) {
+    function aggregateStats(rows) {
         const byName = {};
         rows.forEach(p => {
             if (!byName[p.name]) byName[p.name] = { name: p.name, sample: p.sample, rows: [] };
@@ -132,12 +132,11 @@
                 unit: entry.sample ? "kg" : "pcs",
                 total,
                 target,
-                pencapaian: target > 0 ? Math.round((total / target) * 100) : null,
-                perHari: days > 0 ? Math.round((total / days) * 100) / 100 : total
+                pencapaian: target > 0 ? Math.round((total / target) * 100) : null
             };
         });
 
-        return { days, uniqueProducts: products.length, products };
+        return { uniqueProducts: products.length, products };
     }
 
     function groupByDate(rows) {

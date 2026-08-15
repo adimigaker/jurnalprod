@@ -62,8 +62,7 @@ assert.deepStrictEqual(C.filterProducts(rows, { from: "2026-08-01", to: "2026-08
 assert.deepStrictEqual(C.filterProducts(rows, { from: "2026-08-13", to: "2026-08-13", names: null, mode: "all" }).map(p => p.name), ["Ayam Geprek", "Dimsum"]);
 
 // --- aggregateStats ---
-const st = C.aggregateStats(rows, 2);
-assert.strictEqual(st.days, 2);
+const st = C.aggregateStats(rows);
 assert.strictEqual(st.uniqueProducts, 3);
 assert.strictEqual(st.products.length, 3);
 const ayamSt = st.products.find(p => p.name === "Ayam Geprek");
@@ -71,13 +70,12 @@ assert.strictEqual(ayamSt.unit, "pcs");
 assert.strictEqual(ayamSt.total, 23);
 assert.strictEqual(ayamSt.target, 15);
 assert.strictEqual(ayamSt.pencapaian, 153);
-assert.strictEqual(ayamSt.perHari, 11.5);
 const timSt = st.products.find(p => p.name === "Nasi Goreng");
 assert.strictEqual(timSt.unit, "kg");
 assert.strictEqual(timSt.total, 6.25);
 assert.strictEqual(timSt.pencapaian, null);
 
-const stNoTarget = C.aggregateStats([tim], 1);
+const stNoTarget = C.aggregateStats([tim]);
 assert.strictEqual(stNoTarget.products.length, 1);
 assert.strictEqual(stNoTarget.products[0].pencapaian, null);
 assert.strictEqual(stNoTarget.products[0].total, 6.25);

@@ -36,7 +36,6 @@ function lpStatsHtml(stats, rows) {
             <div class="lp-stats-grid">
                 <div class="lp-stat"><div class="lp-stat-label">Total Produksi</div><div class="lp-stat-val">${formatNumberForDisplay(p.total)} ${p.unit}</div></div>
                 ${p.target > 0 ? `<div class="lp-stat"><div class="lp-stat-label">Target</div><div class="lp-stat-val">${formatNumberForDisplay(p.target)} ${p.unit}</div></div>` : ""}
-                ${stats.days > 1 ? `<div class="lp-stat"><div class="lp-stat-label">Rata-rata/hari</div><div class="lp-stat-val">${formatNumberForDisplay(p.perHari)} ${p.unit}</div></div>` : ""}
             </div>`;
         if (p.sample) {
             const productRows = rows.filter(r => r.name === p.name);
@@ -87,10 +86,6 @@ function lpRange() {
     return LaporanCore.rangeForPeriod(lpPeriod, lpValue);
 }
 
-function lpDays(range) {
-    return lpPeriod === "harian" ? 1 : LaporanCore.daysInRange(range.from, range.to);
-}
-
 function lpPickerHtml() {
     const v = lpValue || today();
     if (lpPeriod === "harian")
@@ -114,7 +109,7 @@ function lpReportData() {
         names: null,
         mode: lpMode
     }).filter(p => !lpQuery || p.name.toLowerCase().includes(lpQuery.toLowerCase()));
-    const stats = LaporanCore.aggregateStats(rows, lpDays(range));
+    const stats = LaporanCore.aggregateStats(rows);
     const groups = LaporanCore.groupByDate(rows);
     return { range, stats, groups };
 }
@@ -316,7 +311,6 @@ function exportLaporanImage() {
             ["Total Produksi", `${formatNumberForDisplay(p.total)} ${p.unit}`],
         ];
         if (p.target > 0) items.push(["Target", `${formatNumberForDisplay(p.target)} ${p.unit}`]);
-        if (stats.days > 1) items.push(["Rata-rata/hari", `${formatNumberForDisplay(p.perHari)} ${p.unit}`]);
         items.forEach(([label, val], i) => {
             const col = i % 3;
             drawStatBox(label, val, pad + col * (boxW + 12), y + (col === 0 && i > 0 ? boxH + 12 : 0));
