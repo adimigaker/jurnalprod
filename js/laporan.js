@@ -31,9 +31,10 @@ function lpStatsHtml(stats, rows) {
             ? ""
             : ` · ${p.pencapaian >= 100 ? "✓" : p.pencapaian + "%"}`;
         const subtitle = p.unit + pct;
+        const nStat = 1 + (p.target > 0 ? 1 : 0);
         h += `
             <div class="lp-section"><div class="lp-section-title">${esc(p.name)} <span style="font-weight:400;text-transform:none;letter-spacing:0">(${subtitle})</span></div></div>
-            <div class="lp-stats-grid">
+            <div class="lp-stats-grid" style="grid-template-columns:repeat(${nStat},1fr)">
                 <div class="lp-stat"><div class="lp-stat-label">Total Produksi</div><div class="lp-stat-val">${formatNumberForDisplay(p.total)} ${p.unit}</div></div>
                 ${p.target > 0 ? `<div class="lp-stat"><div class="lp-stat-label">Target</div><div class="lp-stat-val">${formatNumberForDisplay(p.target)} ${p.unit}</div></div>` : ""}
             </div>`;
@@ -287,14 +288,13 @@ function exportLaporanImage() {
     text(range.label, pad, 104, 22, 400, LP_IMG.muted);
 
     // --- statistik per produk ---
-    const boxW = (W - pad * 2 - 24) / 3;
     const boxH = 76;
     let y = 140;
 
-    const drawStatBox = (label, val, x, yy) => {
+    const drawStatBox = (label, val, x, yy, w) => {
         ctx.fillStyle = LP_IMG.cardBg;
         ctx.beginPath();
-        ctx.roundRect(x, yy, boxW, boxH, 12);
+        ctx.roundRect(x, yy, w, boxH, 12);
         ctx.fill();
         ctx.strokeStyle = LP_IMG.border;
         ctx.lineWidth = 1;
@@ -311,9 +311,9 @@ function exportLaporanImage() {
             ["Total Produksi", `${formatNumberForDisplay(p.total)} ${p.unit}`],
         ];
         if (p.target > 0) items.push(["Target", `${formatNumberForDisplay(p.target)} ${p.unit}`]);
+        const boxW = (W - pad * 2 - (items.length - 1) * 12) / items.length;
         items.forEach(([label, val], i) => {
-            const col = i % 3;
-            drawStatBox(label, val, pad + col * (boxW + 12), y + (col === 0 && i > 0 ? boxH + 12 : 0));
+            drawStatBox(label, val, pad + i * (boxW + 12), y, boxW);
         });
         y += boxH + 40;
         if (p.sample) {
