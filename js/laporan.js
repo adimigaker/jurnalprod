@@ -251,14 +251,15 @@ const LP_IMG = { bg: "#f8fafc", text: "#0f172a", muted: "#64748b", accent: "#388
 const lpClip = (s, n) => (s.length > n ? s.slice(0, n) + "…" : s);
 
 function lpExportHeight(stats, groups) {
-    let h = 320; // title + label + jarak awal
+    let h = 340; // title 2 baris + label + jarak awal
     for (const p of stats.products) {
-        h += 28 + 180 + 60; // section header + stat grid + gap
-        if (p.sample) h += 5 * 52 + 60; // timbangan rows
+        h += 28 + 180 + 60; // section header + stat box + gap
+        if (p.target > 0) h += 92; // baris target (jarak ekstra 32px)
+        if (p.sample) h += 5 * 44 + 60; // timbangan rows
     }
     h += 40; // header DAFTAR HARIAN
     for (const g of groups) {
-        h += 100 + g.items.reduce((s, p) => s + (p.note ? 168 : 144), 0) + 16;
+        h += 140 + g.items.reduce((s, p) => s + (p.note ? 168 : 144), 0) + 16;
     }
     return Math.max(h + 40, 720);
 }
@@ -266,13 +267,13 @@ function lpExportHeight(stats, groups) {
 function exportLaporanImage() {
     const { range, stats, groups } = lpReportData();
     const allRows = groups.flatMap(g => g.items);
-    const W = 1080;
+    const W = 540;
     const H = lpExportHeight(stats, groups);
     const canvas = document.createElement("canvas");
     canvas.width = W;
     canvas.height = H;
     const ctx = canvas.getContext("2d");
-    const pad = 40;
+    const pad = 30;
 
     const text = (s, x, y, size, weight, color, align) => {
         ctx.font = `${weight || 400} ${size}px sans-serif`;
@@ -284,47 +285,43 @@ function exportLaporanImage() {
     ctx.fillStyle = LP_IMG.bg;
     ctx.fillRect(0, 0, W, H);
 
-    text("Laporan Produksi", pad, 160, 112, 700);
-    text(range.label, pad, 240, 56, 400, LP_IMG.muted);
+    text("Laporan", pad, 140, 96, 700);
+    text("Produksi", pad, 248, 96, 700);
+    text(lpClip(range.label, 15), pad, 300, 56, 400, LP_IMG.muted);
 
     // --- statistik per produk ---
     const boxH = 180;
-    let y = 320;
+    let y = 340;
 
-    const drawStatBox = (label, val, x, yy, w) => {
+    for (const p of stats.products) {
+        text(lpClip(p.name.toUpperCase(), 12), pad, y, 56, 700, LP_IMG.muted);
+        y += 28;
         ctx.fillStyle = LP_IMG.cardBg;
         ctx.beginPath();
-        ctx.roundRect(x, yy, w, boxH, 16);
+        ctx.roundRect(pad, y, W - pad * 2, boxH, 16);
         ctx.fill();
         ctx.strokeStyle = LP_IMG.border;
         ctx.lineWidth = 2;
         ctx.stroke();
-        text(label, x + w / 2, yy + 52, 36, 400, LP_IMG.muted, "center");
-        text(val, x + w / 2, yy + 140, 72, 700, LP_IMG.text, "center");
-    };
-
-    for (const p of stats.products) {
-        const pct = p.pencapaian === null ? "" : ` · ${p.pencapaian}%`;
-        text(lpClip(`${p.name.toUpperCase()} (${p.unit}${pct})`, 20), pad, y, 56, 700, LP_IMG.muted);
-        y += 28;
-        const items = [
-            ["Total Produksi", `${formatNumberForDisplay(p.total)} ${p.unit}`],
-        ];
-        if (p.target > 0) items.push(["Target", `${formatNumberForDisplay(p.target)} ${p.unit}`]);
-        const boxW = (W - pad * 2 - (items.length - 1) * 16) / items.length;
-        items.forEach(([label, val], i) => {
-            drawStatBox(label, val, pad + i * (boxW + 16), y, boxW);
-        });
-        y += boxH + 60;
+        text("TOTAL PRODUKSI", pad + (W - pad * 2) / 2, y + 52, 36, 400, LP_IMG.muted, "center");
+        text(`${formatNumberForDisplay(p.total)} ${p.unit}`, pad + (W - pad * 2) / 2, y + 140, 72, 700, LP_IMG.text, "center");
+        y += boxH;
+        if (p.target > 0) {
+            y += 32;
+            text(`Target: ${formatNumberForDisplay(p.target)} ${p.unit}`, pad, y + 6, 44, 600);
+            y += 60;
+        } else {
+            y += 60;
+        }
         if (p.sample) {
             const tt = LaporanCore.timTotals(allRows.filter(r => r.name === p.name));
             for (const t of tt) {
                 ctx.fillStyle = LP_IMG.barBg;
-                ctx.fillRect(pad + 200, y - 10, W - pad * 2 - 400, 2);
-                text(t.label, pad, y + 6, 44, 600);
-                text(fmtBerat(t.berat) + " kg", W - pad - 200, y + 6, 44, 700, LP_IMG.text, "right");
-                text(t.porsi > 0 ? fmtPorsi(t.porsi) + " porsi" : "–", W - pad, y + 6, 44, 700, LP_IMG.accent, "right");
-                y += 52;
+                ctx.fillRect(pad + 130, y - 10, W - pad - 120 - (pad + 130), 2);
+                text(t.label, pad, y + 6, 32, 600);
+                text(fmtBerat(t.berat) + " kg", W - pad - 120, y + 6, 32, 700, LP_IMG.text, "right");
+                text(t.porsi > 0 ? fmtPorsi(t.porsi) + " porsi" : "–", W - pad, y + 6, 32, 700, LP_IMG.accent, "right");
+                y += 44;
             }
             y += 60;
         }
@@ -336,23 +333,23 @@ function exportLaporanImage() {
     for (const g of groups) {
         ctx.fillStyle = LP_IMG.cardBg;
         ctx.beginPath();
-        ctx.roundRect(pad, y, W - pad * 2, 100, 16);
+        ctx.roundRect(pad, y, W - pad * 2, 140, 16);
         ctx.fill();
-        text(g.label, pad + 16, y + 64, 44, 700);
+        text(lpClip(g.label, 15), pad + 16, y + 64, 44, 700);
         const dayTotals = [];
         if (g.dayPcs > 0) dayTotals.push(formatNumberForDisplay(g.dayPcs) + " pcs");
         if (g.dayKg > 0) dayTotals.push(formatNumberForDisplay(g.dayKg) + " kg");
-        text(dayTotals.join(" · ") || "—", W - pad - 16, y + 64, 44, 700, LP_IMG.accent, "right");
-        y += 100;
+        text(dayTotals.join(" · ") || "—", W - pad - 16, y + 108, 32, 400, LP_IMG.accent, "right");
+        y += 140;
         for (const p of g.items) {
             const ih = p.note ? 168 : 144;
-            text("• " + lpClip(p.name, 16), pad + 16, y + 58, 44, 600);
+            text("• " + lpClip(p.name, 10), pad + 16, y + 58, 44, 600);
             text(formatNumberForDisplay(LaporanCore.productTotal(p)), W - pad - 16, y + 58, 44, 700, LP_IMG.text, "right");
             const cols = LaporanCore.colKeys(p)
                 .map(k => `${LaporanCore.colLabels(p)[k]} ${formatNumberForDisplay(LaporanCore.colTotal(p, k))}`)
                 .join(" · ");
-            text(lpClip(cols, 40), pad + 32, y + 96, 32, 400, LP_IMG.muted);
-            if (p.note) text(lpClip(p.note, 55), pad + 32, y + 124, 24, 400, LP_IMG.muted);
+            text(lpClip(cols, 18), pad + 32, y + 96, 32, 400, LP_IMG.muted);
+            if (p.note) text(lpClip(p.note, 20), pad + 32, y + 124, 24, 400, LP_IMG.muted);
             y += ih;
         }
         y += 16;
