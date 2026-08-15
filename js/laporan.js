@@ -257,8 +257,8 @@ const lpClip = (s, n) => (s.length > n ? s.slice(0, n) + "…" : s);
 function lpExportHeight(stats, groups) {
     let h = 150; // title + label
     for (const p of stats.products) {
-        h += 28 + 76 + 28; // section header + stat grid + gap (sama dgn margin 14+14 di browser)
-        if (p.sample) h += 5 * 30 + 28; // timbangan rows
+        h += 28 + 76 + 40; // section header + stat grid + gap
+        if (p.sample) h += 5 * 30 + 40; // timbangan rows
     }
     h += 28; // header DAFTAR HARIAN
     for (const g of groups) {
@@ -301,6 +301,9 @@ function exportLaporanImage() {
         ctx.beginPath();
         ctx.roundRect(x, yy, boxW, boxH, 12);
         ctx.fill();
+        ctx.strokeStyle = LP_IMG.border;
+        ctx.lineWidth = 1;
+        ctx.stroke();
         text(label, x + 14, yy + 28, 17, 400, LP_IMG.muted);
         text(val, x + 14, yy + 60, 24, 700);
     };
@@ -318,7 +321,7 @@ function exportLaporanImage() {
             const col = i % 3;
             drawStatBox(label, val, pad + col * (boxW + 12), y + (col === 0 && i > 0 ? boxH + 12 : 0));
         });
-        y += boxH + 28;
+        y += boxH + 40;
         if (p.sample) {
             const tt = LaporanCore.timTotals(allRows.filter(r => r.name === p.name));
             for (const t of tt) {
@@ -329,7 +332,7 @@ function exportLaporanImage() {
                 text(t.porsi > 0 ? fmtPorsi(t.porsi) + " porsi" : "–", W - pad, y + 4, 19, 700, LP_IMG.accent, "right");
                 y += 30;
             }
-            y += 28;
+            y += 40;
         }
     }
 
