@@ -266,13 +266,13 @@ function lpExportHeight(stats, groups) {
 function exportLaporanImage() {
     const { range, stats, groups } = lpReportData();
     const allRows = groups.flatMap(g => g.items);
-    const W = 720;
+    const W = 1080;
     const H = lpExportHeight(stats, groups);
     const canvas = document.createElement("canvas");
     canvas.width = W;
     canvas.height = H;
     const ctx = canvas.getContext("2d");
-    const pad = 32;
+    const pad = 48;
 
     const text = (s, x, y, size, weight, color, align) => {
         ctx.font = `${weight || 400} ${size}px sans-serif`;
@@ -305,7 +305,7 @@ function exportLaporanImage() {
 
     for (const p of stats.products) {
         const pct = p.pencapaian === null ? "" : ` · ${p.pencapaian}%`;
-        text(lpClip(`${p.name.toUpperCase()} (${p.unit}${pct})`, 20), pad, y, 32, 700, LP_IMG.muted);
+        text(lpClip(`${p.name.toUpperCase()} (${p.unit}${pct})`, 36), pad, y, 32, 700, LP_IMG.muted);
         y += 28;
         const items = [
             ["Total Produksi", `${formatNumberForDisplay(p.total)} ${p.unit}`],
@@ -320,7 +320,7 @@ function exportLaporanImage() {
             const tt = LaporanCore.timTotals(allRows.filter(r => r.name === p.name));
             for (const t of tt) {
                 ctx.fillStyle = LP_IMG.barBg;
-                ctx.fillRect(pad + 150, y - 12, 150, 1);
+                ctx.fillRect(pad + 220, y - 12, 260, 1);
                 text(t.label, pad, y + 8, 32, 600);
                 text(fmtBerat(t.berat) + " kg", W - pad - 176, y + 8, 32, 700, LP_IMG.text, "right");
                 text(t.porsi > 0 ? fmtPorsi(t.porsi) + " porsi" : "–", W - pad, y + 8, 32, 700, LP_IMG.accent, "right");
@@ -346,13 +346,13 @@ function exportLaporanImage() {
         y += 80;
         for (const p of g.items) {
             const ih = p.note ? 176 : 128;
-            text("• " + lpClip(p.name, 16), pad + 28, y + 44, 32, 600);
+            text("• " + lpClip(p.name, 26), pad + 28, y + 44, 32, 600);
             text(formatNumberForDisplay(LaporanCore.productTotal(p)), W - pad - 28, y + 44, 32, 700, LP_IMG.text, "right");
             const cols = LaporanCore.colKeys(p)
                 .map(k => `${LaporanCore.colLabels(p)[k]} ${formatNumberForDisplay(LaporanCore.colTotal(p, k))}`)
                 .join(" · ");
-            text(lpClip(cols, 36), pad + 56, y + 88, 28, 400, LP_IMG.muted);
-            if (p.note) text(lpClip(p.note, 40), pad + 56, y + 124, 24, 400, LP_IMG.muted);
+            text(lpClip(cols, 60), pad + 56, y + 88, 28, 400, LP_IMG.muted);
+            if (p.note) text(lpClip(p.note, 55), pad + 56, y + 124, 24, 400, LP_IMG.muted);
             y += ih;
         }
         y += 16;
