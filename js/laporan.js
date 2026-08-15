@@ -72,7 +72,7 @@ function lpGroupsHtml(groups) {
                             <div class="lp-item-head">
                                 <span class="lp-item-name">${esc(p.name)}</span>
                                 <span class="lp-item-mode">${LP_MODE_LABEL(p)}</span>
-                                <span class="lp-item-total">${formatNumberForDisplay(LaporanCore.productTotal(p))}</span>
+                                <span class="lp-item-total">${formatNumberForDisplay(LaporanCore.productTotal(p))} ${p.unit}</span>
                             </div>
                             <div class="lp-cols">${lpColsHtml(p)}</div>
                             ${p.note ? `<div class="lp-note">${esc(p.note)}</div>` : ""}
@@ -349,7 +349,7 @@ function exportLaporanImage() {
         for (const p of g.items) {
             const ih = p.note ? 176 : 128;
             text("• " + lpClip(p.name, 26), pad + 28, y + 44, 32, 600);
-            text(formatNumberForDisplay(LaporanCore.productTotal(p)), W - pad - 28, y + 44, 32, 700, LP_IMG.text, "right");
+            text(`${formatNumberForDisplay(LaporanCore.productTotal(p))} ${p.unit}`, W - pad - 28, y + 44, 32, 700, LP_IMG.text, "right");
             const cols = LaporanCore.colKeys(p)
                 .map(k => `${LaporanCore.colLabels(p)[k]} ${formatNumberForDisplay(LaporanCore.colTotal(p, k))}`)
                 .join(" · ");
