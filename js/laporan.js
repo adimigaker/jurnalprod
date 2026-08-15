@@ -319,11 +319,13 @@ function exportLaporanImage() {
         if (p.sample) {
             const tt = LaporanCore.timTotals(allRows.filter(r => r.name === p.name));
             for (const t of tt) {
+                ctx.font = "600 32px sans-serif";
+                const desc = ctx.measureText(t.label).actualBoundingBoxDescent || 12;
                 text(t.label, pad, y + 8, 32, 600);
                 text(fmtBerat(t.berat) + " kg", W - pad - 176, y + 8, 32, 700, LP_IMG.text, "right");
                 text(t.porsi > 0 ? fmtPorsi(t.porsi) + " porsi" : "–", W - pad, y + 8, 32, 700, LP_IMG.accent, "right");
                 ctx.fillStyle = LP_IMG.border;
-                ctx.fillRect(pad, y + 22, W - pad * 2, 1);
+                ctx.fillRect(pad, y + 8 + desc + 10, W - pad * 2, 1);
                 y += 52;
             }
             y += 72;
