@@ -319,8 +319,10 @@ function exportLaporanImage() {
         if (p.sample) {
             const tt = LaporanCore.timTotals(allRows.filter(r => r.name === p.name));
             for (const t of tt) {
+                ctx.font = "600 32px sans-serif";
+                const lw = ctx.measureText(t.label).width;
                 ctx.fillStyle = LP_IMG.barBg;
-                ctx.fillRect(pad + 220, y - 12, 260, 1);
+                ctx.fillRect(pad + lw + 12, y - 12, W - pad - 176 - 16 - (pad + lw + 12), 1);
                 text(t.label, pad, y + 8, 32, 600);
                 text(fmtBerat(t.berat) + " kg", W - pad - 176, y + 8, 32, 700, LP_IMG.text, "right");
                 text(t.porsi > 0 ? fmtPorsi(t.porsi) + " porsi" : "–", W - pad, y + 8, 32, 700, LP_IMG.accent, "right");
