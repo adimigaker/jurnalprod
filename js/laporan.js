@@ -281,7 +281,7 @@ function lpColLines(p, maxW) {
 
 function lpExportHeight(stats, groups) {
     const maxW = 1080 - 48 * 2 - 56;
-    let h = 376; // title + label + divider + jarak awal
+    let h = 316; // title + label + divider + jarak awal
     for (const p of stats.products) {
         h += 28 + 136 + 72; // section header + stat grid + gap
         if (p.sample) h += 5 * 52 + 72; // timbangan rows
@@ -324,7 +324,7 @@ function exportLaporanImage() {
 
     // --- statistik per produk ---
     const boxH = 136;
-    let y = 376;
+    let y = 316;
 
     const drawStatBox = (label, val, x, yy, w) => {
         ctx.fillStyle = LP_IMG.cardBg;
