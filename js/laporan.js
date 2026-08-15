@@ -269,17 +269,14 @@ function lpColLines(p, maxW) {
     };
     const segs = LaporanCore.colKeys(p).map(k => {
         const total = LaporanCore.colTotal(p, k);
-        if (p.sample) return `${LaporanCore.colLabels(p)[k]} ${fmtBerat(total)} kg`;
+        if (p.sample) {
+            const c = p.containers[k] || {};
+            const berat = `${LaporanCore.colLabels(p)[k]} ${fmtBerat(total)} kg`;
+            return c.porsi ? `${berat} - ${fmtPorsi(c.porsi)} porsi` : berat;
+        }
         return `${LaporanCore.colLabels(p)[k]} ${formatNumberForDisplay(total)} ${p.unit}`;
     });
-    const lines = wrap(segs);
-    if (p.sample) {
-        const porsi = LaporanCore.colKeys(p)
-            .filter(k => (p.containers[k] || {}).porsi)
-            .map(k => `${LaporanCore.colLabels(p)[k]} ${fmtPorsi(p.containers[k].porsi)} porsi`);
-        if (porsi.length) lines.push(...wrap(porsi));
-    }
-    return lines;
+    return wrap(segs);
 }
 
 function lpExportHeight(stats, groups) {
