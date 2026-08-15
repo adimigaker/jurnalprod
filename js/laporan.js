@@ -299,8 +299,8 @@ function exportLaporanImage() {
         ctx.strokeStyle = LP_IMG.border;
         ctx.lineWidth = 1;
         ctx.stroke();
-        text(label, x + 14, yy + 28, 17, 400, LP_IMG.muted);
-        text(val, x + 14, yy + 60, 24, 700);
+        text(label, x + w / 2, yy + 28, 17, 400, LP_IMG.muted, "center");
+        text(val, x + w / 2, yy + 60, 24, 700, LP_IMG.text, "center");
     };
 
     for (const p of stats.products) {
