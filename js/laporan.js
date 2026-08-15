@@ -257,7 +257,7 @@ const lpClip = (s, n) => (s.length > n ? s.slice(0, n) + "…" : s);
 function lpExportHeight(stats, groups) {
     let h = 150; // title + label
     for (const p of stats.products) {
-        h += 30 + 76 + 40; // section header + stat grid + gap
+        h += 16 + 76 + 40; // section header + stat grid + gap
         if (p.sample) h += 5 * 30 + 40; // timbangan rows
     }
     h += 28; // header DAFTAR HARIAN
@@ -311,7 +311,7 @@ function exportLaporanImage() {
     for (const p of stats.products) {
         const pct = p.pencapaian === null ? "" : ` · ${p.pencapaian}%`;
         text(`${p.name.toUpperCase()} (${p.unit}${pct})`, pad, y, 18, 700, LP_IMG.muted);
-        y += 30;
+        y += 16;
         const items = [
             ["Total Produksi", `${formatNumberForDisplay(p.total)} ${p.unit}`],
         ];
