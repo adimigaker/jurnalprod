@@ -251,28 +251,28 @@ const LP_IMG = { bg: "#f8fafc", text: "#0f172a", muted: "#64748b", accent: "#388
 const lpClip = (s, n) => (s.length > n ? s.slice(0, n) + "…" : s);
 
 function lpExportHeight(stats, groups) {
-    let h = 150; // title + label
+    let h = 62; // title + label + jarak awal
     for (const p of stats.products) {
-        h += 16 + 76 + 40; // section header + stat grid + gap
-        if (p.sample) h += 5 * 30 + 40; // timbangan rows
+        h += 7 + 34 + 18; // section header + stat grid + gap
+        if (p.sample) h += 5 * 13 + 18; // timbangan rows
     }
-    h += 28; // header DAFTAR HARIAN
+    h += 12; // header DAFTAR HARIAN
     for (const g of groups) {
-        h += 46 + g.items.reduce((s, p) => s + (p.note ? 82 : 62), 0) + 8;
+        h += 20 + g.items.reduce((s, p) => s + (p.note ? 44 : 32), 0) + 4;
     }
-    return Math.max(h + 40, 480);
+    return Math.max(h + 18, 240);
 }
 
 function exportLaporanImage() {
     const { range, stats, groups } = lpReportData();
     const allRows = groups.flatMap(g => g.items);
-    const W = 1080;
+    const W = 480;
     const H = lpExportHeight(stats, groups);
     const canvas = document.createElement("canvas");
     canvas.width = W;
     canvas.height = H;
     const ctx = canvas.getContext("2d");
-    const pad = 40;
+    const pad = 18;
 
     const text = (s, x, y, size, weight, color, align) => {
         ctx.font = `${weight || 400} ${size}px sans-serif`;
@@ -284,78 +284,78 @@ function exportLaporanImage() {
     ctx.fillStyle = LP_IMG.bg;
     ctx.fillRect(0, 0, W, H);
 
-    text("Laporan Produksi", pad, 70, 40, 700);
-    text(range.label, pad, 104, 22, 400, LP_IMG.muted);
+    text("Laporan Produksi", pad, 31, 18, 700);
+    text(range.label, pad, 46, 10, 400, LP_IMG.muted);
 
     // --- statistik per produk ---
-    const boxH = 76;
-    let y = 140;
+    const boxH = 34;
+    let y = 62;
 
     const drawStatBox = (label, val, x, yy, w) => {
         ctx.fillStyle = LP_IMG.cardBg;
         ctx.beginPath();
-        ctx.roundRect(x, yy, w, boxH, 12);
+        ctx.roundRect(x, yy, w, boxH, 5);
         ctx.fill();
         ctx.strokeStyle = LP_IMG.border;
         ctx.lineWidth = 1;
         ctx.stroke();
-        text(label, x + w / 2, yy + 28, 17, 400, LP_IMG.muted, "center");
-        text(val, x + w / 2, yy + 60, 24, 700, LP_IMG.text, "center");
+        text(label, x + w / 2, yy + 12, 8, 400, LP_IMG.muted, "center");
+        text(val, x + w / 2, yy + 27, 11, 700, LP_IMG.text, "center");
     };
 
     for (const p of stats.products) {
         const pct = p.pencapaian === null ? "" : ` · ${p.pencapaian}%`;
-        text(`${p.name.toUpperCase()} (${p.unit}${pct})`, pad, y, 18, 700, LP_IMG.muted);
-        y += 16;
+        text(`${p.name.toUpperCase()} (${p.unit}${pct})`, pad, y, 8, 700, LP_IMG.muted);
+        y += 7;
         const items = [
             ["Total Produksi", `${formatNumberForDisplay(p.total)} ${p.unit}`],
         ];
         if (p.target > 0) items.push(["Target", `${formatNumberForDisplay(p.target)} ${p.unit}`]);
-        const boxW = (W - pad * 2 - (items.length - 1) * 12) / items.length;
+        const boxW = (W - pad * 2 - (items.length - 1) * 5) / items.length;
         items.forEach(([label, val], i) => {
-            drawStatBox(label, val, pad + i * (boxW + 12), y, boxW);
+            drawStatBox(label, val, pad + i * (boxW + 5), y, boxW);
         });
-        y += boxH + 40;
+        y += boxH + 18;
         if (p.sample) {
             const tt = LaporanCore.timTotals(allRows.filter(r => r.name === p.name));
             for (const t of tt) {
                 ctx.fillStyle = LP_IMG.barBg;
-                ctx.fillRect(pad + 240, y - 14, W - pad * 2 - 240, 1);
-                text(t.label, pad, y + 4, 19, 600);
-                text(fmtBerat(t.berat) + " kg", W - pad - 140, y + 4, 19, 700, LP_IMG.text, "right");
-                text(t.porsi > 0 ? fmtPorsi(t.porsi) + " porsi" : "–", W - pad, y + 4, 19, 700, LP_IMG.accent, "right");
-                y += 30;
+                ctx.fillRect(pad + 107, y - 6, W - pad * 2 - 107, 1);
+                text(t.label, pad, y + 2, 8, 600);
+                text(fmtBerat(t.berat) + " kg", W - pad - 62, y + 2, 8, 700, LP_IMG.text, "right");
+                text(t.porsi > 0 ? fmtPorsi(t.porsi) + " porsi" : "–", W - pad, y + 2, 8, 700, LP_IMG.accent, "right");
+                y += 13;
             }
-            y += 40;
+            y += 18;
         }
     }
 
     // --- daftar harian ---
-    text("DAFTAR HARIAN", pad, y, 18, 700, LP_IMG.muted);
-    y += 28;
+    text("DAFTAR HARIAN", pad, y, 8, 700, LP_IMG.muted);
+    y += 12;
     for (const g of groups) {
         ctx.fillStyle = LP_IMG.cardBg;
         ctx.beginPath();
-        ctx.roundRect(pad, y, W - pad * 2, 46, 10);
+        ctx.roundRect(pad, y, W - pad * 2, 20, 5);
         ctx.fill();
-        text(g.label, pad + 16, y + 29, 18, 700);
+        text(g.label, pad + 7, y + 13, 8, 700);
         const dayTotals = [];
         if (g.dayPcs > 0) dayTotals.push(formatNumberForDisplay(g.dayPcs) + " pcs");
         if (g.dayKg > 0) dayTotals.push(formatNumberForDisplay(g.dayKg) + " kg");
-        text(dayTotals.join(" · ") || "—", W - pad - 16, y + 29, 18, 700, LP_IMG.accent, "right");
-        y += 46;
+        text(dayTotals.join(" · ") || "—", W - pad - 7, y + 13, 8, 700, LP_IMG.accent, "right");
+        y += 20;
         for (const p of g.items) {
-            const ih = p.note ? 82 : 62;
-            text("• " + lpClip(p.name, 34), pad + 16, y + 24, 18, 600);
-            text(formatNumberForDisplay(LaporanCore.productTotal(p)), W - pad - 16, y + 24, 18, 700, LP_IMG.text, "right");
+            const ih = p.note ? 44 : 32;
+            text("• " + lpClip(p.name, 34), pad + 7, y + 11, 8, 600);
+            text(formatNumberForDisplay(LaporanCore.productTotal(p)), W - pad - 7, y + 11, 8, 700, LP_IMG.text, "right");
             const cols = LaporanCore.colKeys(p)
                 .map(k => `${LaporanCore.colLabels(p)[k]} ${formatNumberForDisplay(LaporanCore.colTotal(p, k))}`)
                 .join(" · ");
-            text(lpClip(cols, 60), pad + 32, y + 42, 15, 400, LP_IMG.muted);
-            if (p.note) text(lpClip(p.note, 55), pad + 32, y + 60, 14, 400, LP_IMG.muted);
+            text(lpClip(cols, 60), pad + 14, y + 19, 7, 400, LP_IMG.muted);
+            if (p.note) text(lpClip(p.note, 55), pad + 14, y + 29, 6, 400, LP_IMG.muted);
             y += ih;
         }
-        y += 8;
+        y += 4;
     }
 
     canvas.toBlob(blob => {
