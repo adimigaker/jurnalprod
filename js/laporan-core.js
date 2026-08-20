@@ -126,13 +126,25 @@
         const products = Object.values(byName).map(entry => {
             const total = Math.round(entry.rows.reduce((s, p) => s + productTotal(p), 0) * 100) / 100;
             const target = Math.round(entry.rows.reduce((s, p) => s + productTarget(p), 0) * 100) / 100;
+            const split = !!entry.rows[0]?.split;
+            const colTotals = split
+                ? { kecil: Math.round(entry.rows.reduce((s, p) => s + colTotal(p, "kecil"), 0) * 100) / 100,
+                    besar: Math.round(entry.rows.reduce((s, p) => s + colTotal(p, "besar"), 0) * 100) / 100 }
+                : {};
+            const colTargets = split
+                ? { kecil: entry.rows.reduce((s, p) => s + colTarget(p, "kecil"), 0),
+                    besar: entry.rows.reduce((s, p) => s + colTarget(p, "besar"), 0) }
+                : {};
             return {
                 name: entry.name,
                 sample: entry.sample,
                 unit: entry.sample ? "kg" : "pcs",
+                split,
                 total,
                 target,
-                pencapaian: target > 0 ? Math.round((total / target) * 100) : null
+                pencapaian: target > 0 ? Math.round((total / target) * 100) : null,
+                colTotals,
+                colTargets
             };
         });
 

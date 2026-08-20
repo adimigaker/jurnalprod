@@ -31,13 +31,29 @@ function lpStatsHtml(stats, rows) {
             ? ""
             : ` · ${p.pencapaian >= 100 ? "✓" : p.pencapaian + "%"}`;
         const subtitle = p.unit + pct;
-        const nStat = 1 + (p.target > 0 ? 1 : 0);
-        h += `
-            <div class="lp-section"><div class="lp-section-title">${esc(p.name)} <span style="font-weight:400;text-transform:none;letter-spacing:0">(${subtitle})</span></div></div>
-            <div class="lp-stats-grid" style="grid-template-columns:repeat(${nStat},1fr)">
+
+        let statBoxes = "";
+        if (p.split) {
+            const cols = ["kecil", "besar"];
+            statBoxes = `<div class="lp-stats-grid" style="grid-template-columns:repeat(2,1fr)">` +
+                cols.map(k => {
+                    const val = formatNumberForDisplay(p.colTotals[k]);
+                    const tgt = p.colTargets[k] > 0
+                        ? ` <span style="font-size:12px;font-weight:400;color:var(--text-muted)">/ ${formatNumberForDisplay(p.colTargets[k])} ${p.unit}</span>`
+                        : "";
+                    return `<div class="lp-stat"><div class="lp-stat-label">${k === "kecil" ? "Kecil" : "Besar"}</div><div class="lp-stat-val">${val} ${p.unit}${tgt}</div></div>`;
+                }).join("") + `</div>`;
+        } else {
+            const nStat = 1 + (p.target > 0 ? 1 : 0);
+            statBoxes = `<div class="lp-stats-grid" style="grid-template-columns:repeat(${nStat},1fr)">
                 <div class="lp-stat"><div class="lp-stat-label">Total Produksi</div><div class="lp-stat-val">${formatNumberForDisplay(p.total)} ${p.unit}</div></div>
                 ${p.target > 0 ? `<div class="lp-stat"><div class="lp-stat-label">Target</div><div class="lp-stat-val">${formatNumberForDisplay(p.target)} ${p.unit}</div></div>` : ""}
             </div>`;
+        }
+
+        h += `
+            <div class="lp-section"><div class="lp-section-title">${esc(p.name)} <span style="font-weight:400;text-transform:none;letter-spacing:0">(${subtitle})</span></div></div>
+            ${statBoxes}`;
         if (p.sample) {
             const productRows = rows.filter(r => r.name === p.name);
             const tt = LaporanCore.timTotals(productRows);
@@ -342,10 +358,19 @@ function exportLaporanImage() {
         const pct = p.pencapaian === null ? "" : ` · ${p.pencapaian}%`;
         text(lpClip(`${p.name.toUpperCase()} (${p.unit}${pct})`, 36), pad, y, 32, 700, LP_IMG.muted);
         y += 28;
-        const items = [
-            ["Total Produksi", `${formatNumberForDisplay(p.total)} ${p.unit}`],
-        ];
-        if (p.target > 0) items.push(["Target", `${formatNumberForDisplay(p.target)} ${p.unit}`]);
+        const items = [];
+        if (p.split) {
+            ["kecil", "besar"].forEach(k => {
+                const val = formatNumberForDisplay(p.colTotals[k]);
+                const tgt = p.colTargets[k] > 0
+                    ? ` / ${formatNumberForDisplay(p.colTargets[k])}`
+                    : "";
+                items.push([k === "kecil" ? "Kecil" : "Besar", `${val}${tgt} ${p.unit}`]);
+            });
+        } else {
+            items.push(["Total Produksi", `${formatNumberForDisplay(p.total)} ${p.unit}`]);
+            if (p.target > 0) items.push(["Target", `${formatNumberForDisplay(p.target)} ${p.unit}`]);
+        }
         const boxW = (W - pad * 2 - (items.length - 1) * 16) / items.length;
         items.forEach(([label, val], i) => {
             drawStatBox(label, val, pad + i * (boxW + 16), y, boxW);
