@@ -140,7 +140,10 @@ function renderLaporanBody() {
         <div class="lp-period-label">${range.label}</div>
         ${lpStatsHtml(stats, rows)}
         <div class="lp-section"><div class="lp-section-title">Daftar Harian</div></div>
-        ${lpGroupsHtml(groups)}`;
+        ${lpGroupsHtml(groups)}
+        <div class="lp-actions">
+            <button class="lp-share" id="lpShare">Share Gambar</button>
+        </div>`;
 }
 
 function renderLaporan() {
@@ -174,10 +177,7 @@ function renderLaporan() {
                 </div>
             </div>
         </div>
-        <div class="lp-body" id="lpBody"></div>
-        <div class="lp-actions">
-            <button class="lp-share" id="lpShare">Share Gambar</button>
-        </div>`;
+        <div class="lp-body" id="lpBody"></div>`;
 
     pg.removeEventListener("click", lpOnClick);
     pg.addEventListener("click", lpOnClick);

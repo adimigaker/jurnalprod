@@ -2937,12 +2937,8 @@ html.light .icon-moon {
     color: var(--text-muted);
 }
 .lp-actions {
-    position: sticky;
-    bottom: 0;
-    padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
-    background: var(--bg);
-    border-top: 1px solid var(--border);
-    z-index: 6;
+    padding: 16px 12px calc(16px + env(safe-area-inset-bottom));
+    margin-top: 16px;
 }
 .lp-share {
     width: 100%;
